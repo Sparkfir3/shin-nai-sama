@@ -2,7 +2,9 @@ import discord
 
 import sys
 sys.path.append('Source Code/enums')
-import player_types
+from player_types import Player_Types
+
+from random import shuffle
 
 # Stores information about each plater
 class Player(object):
@@ -63,6 +65,7 @@ class Player_Manager(object):
     wolves_all = []
     wolves = []
 
+    # Player management
     @classmethod
     def add_player(cls, player):
         for p in cls.players:
@@ -71,18 +74,6 @@ class Player_Manager(object):
 
         cls.players.append(player)
         return True
-
-    @classmethod
-    def list_players(cls):
-        text = ""
-        # No players
-        if len(cls.players) == 0:
-            text = "No players are currently in the game."
-        # Get players
-        else:
-            for player in cls.players:
-                text += "{}\n".format(player.name)
-        return discord.Embed(color = 0x0080ff, title = "List of Players", description = text)
 
     @classmethod
     def remove_player(cls, mentions):
@@ -107,3 +98,27 @@ class Player_Manager(object):
         amount = len(cls.players)
         cls.players = []
         return "All {} players have been removed.".format(amount)
+
+    # Listing players
+    @classmethod
+    def list_players(cls):
+        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
+
+    @classmethod
+    def list_players_raw(cls):
+        text = ""
+        # No players
+        if len(cls.players) == 0:
+            text = "No players are currently in the game."
+        # Get players
+        else:
+            for player in cls.players:
+                text += "{}\n".format(player.name)
+        return text
+
+    # -------------------------------------------
+
+    # Start game
+    @classmethod
+    def distribute_roles(cls):
+        count = len(cls.players)
