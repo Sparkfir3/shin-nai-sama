@@ -1,7 +1,7 @@
 import discord
 
 import sys
-sys.path.append('Source Code/enums')
+sys.path.append('source/enums')
 from player_types import Player_Types
 
 from random import shuffle

@@ -1,17 +1,22 @@
+# Import discord
 import discord
 from discord.ext import commands
 from discord.utils import get
 
+# Import python modules
+import sys
+import asyncio
+
 # Import main modules
 import players
 
+sys.path.append("")
+from settings import TOKEN
+
 # Import enums
-import sys
-sys.path.append('Source Code/enums')
+sys.path.append("source/enums")
 from player_types import Player_Types
 from game_phases import Game_Phase
-
-import asyncio
 
 # ---------------------------------------------------------------------------------------
 
@@ -22,7 +27,7 @@ client.remove_command("help")
 # Console output on ready
 @client.event
 async def on_ready():
-    print("\n\n\nWe have loggined in as {0.user}\n".format(client))
+    print("\n\n\nWe have loggined in as {0.user}\n\n".format(client))
 
 # ---------------------------------------------------------------------------------------
 
@@ -461,5 +466,4 @@ async def test(ctx):
 
 # ---------------------------------------------------------------------------------------
 
-# Access code removed for security purposes
-client.run("")
+client.run(TOKEN)
