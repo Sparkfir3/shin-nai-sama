@@ -4,6 +4,7 @@ import sys
 sys.path.append('source/enums')
 from player_types import Player_Types
 
+import random
 from random import shuffle
 
 # Stores information about each plater
@@ -37,6 +38,25 @@ class Player(object):
 
     def on_wolf_side(self):
         return type >= 5
+
+    def role_to_string(self):
+        if self.type == Player_Types.Human:
+            return "Human"
+        elif self.type == Player_Types.Snake:
+            return "Snake"
+        elif self.type == Player_Types.Spider:
+            return "Spider"
+        elif self.type == Player_Types.Monkey:
+            return "Monkey"
+        elif self.type == Player_Types.Crow:
+            return "Crow"
+        elif self.type == Player_Types.Badger:
+            return "Badger"
+        elif self.type == Player_Types.Wolf:
+            return "Wolf"
+        
+        else:
+            return "Error"
 
 # Class that stores players
 class Player_Manager(object):
@@ -99,13 +119,23 @@ class Player_Manager(object):
         cls.players = []
         return "All {} players have been removed.".format(amount)
 
+    # -------------------------------------------
+
     # Listing players
     @classmethod
     def list_players(cls):
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
 
     @classmethod
-    def list_players_raw(cls):
+    def list_players_mention(cls):
+        return cls.list_players_raw(mention = True)
+
+    @classmethod
+    def list_players_with_roles(cls):
+        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(role = True))
+
+    @classmethod
+    def list_players_raw(cls, mention = False, role = False):
         text = ""
         # No players
         if len(cls.players) == 0:
@@ -113,7 +143,8 @@ class Player_Manager(object):
         # Get players
         else:
             for player in cls.players:
-                text += "{}\n".format(player.name)
+                text += "{}{}\n".format(player.name if (not mention) else "<@{}>".format(player.id) \
+                    , " - {}".format(player.role_to_string()) if role else "")
         return text
 
     # -------------------------------------------
@@ -122,3 +153,51 @@ class Player_Manager(object):
     @classmethod
     def distribute_roles(cls):
         count = len(cls.players)
+        wolf_count = int(count / 4)
+        have_badger = random.randint(1, 100) < 50
+        players = []
+        for player in cls.players:
+            players.append(player)
+        shuffle(players)
+        
+        try:
+            # Wolves
+            for i in range(wolf_count):
+                players[-1].type = Player_Types.Wolf
+                cls.wolves_all.append(players[-1])
+                cls.wolves.append(players.pop())
+
+            # Power roles
+            players[-1].type = Player_Types.Snake
+            cls.snake = players.pop()
+            cls.snake_alive = True
+
+            players[-1].type = Player_Types.Spider
+            cls.spider = players.pop()
+            cls.spider_alive = True
+
+            players[-1].type = Player_Types.Crow
+            cls.crow = players.pop()
+            cls.crow_alive = True
+
+            for i in range(2):
+                players[-1].type = Player_Types.Monkey
+                cls.monkeys_all.append(players[-1])
+                cls.monkeys.append(players.pop())
+
+            # Badger
+            if have_badger:
+                players[-1].type = Player_Types.Badger
+                cls.badger = players.pop()
+                cls.badger_alive = True
+
+            # Regular humans
+            for i in range(len(players)):
+                players[-1].type = Player_Types.Human
+                cls.humans_all.append(players[-1])
+                cls.humans.append(players.pop())
+
+        except:
+            print("error")
+            return False
+        return True

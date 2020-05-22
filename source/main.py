@@ -17,6 +17,7 @@ from settings import TOKEN
 sys.path.append("source/enums")
 from player_types import Player_Types
 from game_phases import Game_Phase
+from perm_levels import Perm_Level
 
 # ---------------------------------------------------------------------------------------
 
@@ -28,6 +29,43 @@ client.remove_command("help")
 @client.event
 async def on_ready():
     print("\n\n\nWe have loggined in as {0.user}\n\n".format(client))
+
+# ---------------------------------------------------------------------------------------
+
+# Global variables - Confirmation messages
+start_confirm_message = None
+start_confirm_user = None
+
+confirm_message = {
+    "start" : start_confirm_message
+}
+
+confirm_user = {
+    "start" : start_confirm_user
+}
+
+# Global variables - Channels
+channel_moderator = None
+channel_meeting = None
+channel_snake = None
+channel_spider = None
+channel_wolves = None
+channel_dead = None
+
+channel_voice_meeting = None
+channel_voice_wolves = None
+
+channels = {
+    "moderator" : channel_moderator,
+    "meeting" : channel_meeting,
+    "snake" : channel_snake,
+    "spider" : channel_spider,
+    "wolves" : channel_wolves,
+    "dead" : channel_dead,
+
+    "voice_meeting" : channel_voice_meeting,
+    "voice_wolves" : channel_voice_wolves
+}
 
 # ---------------------------------------------------------------------------------------
 
@@ -74,29 +112,6 @@ async def ping(ctx):
 # ---------------------------------------------------------------------------------------
 
 # Setup Channels
-channel_moderator = None
-channel_meeting = None
-channel_snake = None
-channel_spider = None
-channel_wolves = None
-channel_dead = None
-
-channel_voice_meeting = None
-channel_voice_wolves = None
-
-channels = {
-    "moderator" : channel_moderator,
-    "meeting" : channel_meeting,
-    "snake" : channel_snake,
-    "spider" : channel_spider,
-    "wolves" : channel_wolves,
-    "dead" : channel_dead,
-
-    "voice_meeting" : channel_voice_meeting,
-    "voice_wolves" : channel_voice_wolves
-}
-
-# ------------------
 
 @help.command(pass_context = True, aliases = ["channels"])
 async def channel(ctx):
@@ -121,184 +136,240 @@ async def channel(ctx):
 
 @client.command(pass_context = True, aliases = ["channels"])
 async def channel(ctx, *args):
-    global channels
-    # Grab arguments
-    try:
-        arg = args[0].lower()
-        text_channel = ctx.message.channel_mentions[0]
-    except: # Invalid arguments
+    # Check permissions
+    if check_perms(ctx):
+        global channels
+        # Grab arguments
+        try:
+            arg = args[0].lower()
+            text_channel = ctx.message.channel_mentions[0]
+        except: # Invalid arguments
+            embed = discord.Embed(color = 0xff0000, title = "Invalid Arguments", description = "Invalid arguments supplied.\nUse `$help channel` for more details.")
+            await ctx.send(embed = embed)
+            return
+
+        # Setup text channel
+        if arg in channels:
+            try:
+                channels[arg] = text_channel
+                text = "Successfully setup <#{}> as the {} channel.".format(str(channels[arg].id), arg)
+                embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = text)
+                await ctx.send(embed = embed)
+            except:
+                embed = discord.Embed(color = 0xff0000, title = "Channel Setup Failed", description = "Failed to setup the given channel.")
+                await ctx.send(embed = embed)
+            return
+
+        # Grab optional argument for voice channels
+        try:
+            arg_voice = args[1].lower()
+        except:
+            None
+
+        # Setup voice channel
+        if arg == "voice":
+            # Meeting voice chat
+            if arg_voice == "meeting":
+                try:
+                    channels["voice_meeting"] = text_channel
+                    text = "Successfully setup <#{}> as the meeting voice channel.".format(str(channels["voice_meeting"].id))
+                    embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = text)
+                    await ctx.send(embed = embed)
+                except:
+                    embed = discord.Embed(color = 0xff0000, title = "Channel Setup Failed", description = "Failed to setup the meeting voice channel.\nUse the format `<#channel_id>` to mention voice channels.")
+                    await ctx.send(embed = embed)
+                return
+
+            # Wolf voice chat
+            elif arg_voice == "wolves":
+                try:
+                    channels["voice_wolves"] = text_channel
+                    text = "Successfully setup <#{}> as the wolves voice channel.".format(str(channels["voice_wolves"].id))
+                    embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = text)
+                    await ctx.send(embed = embed)
+                except:
+                    embed = discord.Embed(color = 0xff0000, title = "Channel Setup Failed", description = "Failed to setup the wolves voice channel.\nUse the format `<#channel_id>` to mention voice channels.")
+                    await ctx.send(embed = embed)
+                return
+
+        # Nothing happened
         embed = discord.Embed(color = 0xff0000, title = "Invalid Arguments", description = "Invalid arguments supplied.\nUse `$help channel` for more details.")
         await ctx.send(embed = embed)
-        return
 
-    # Setup text channel
-    if arg in channels:
-        try:
-            channels[arg] = text_channel
-            text = "Successfully setup <#{}> as the {} channel.".format(str(channels[arg].id), arg)
-            embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = text)
-            await ctx.send(embed = embed)
-        except:
-            embed = discord.Embed(color = 0xff0000, title = "Channel Setup Failed", description = "Failed to setup the given channel.")
-            await ctx.send(embed = embed)
-        return
-
-    # Grab optional argument for voice channels
-    try:
-        arg_voice = args[1].lower()
-    except:
-        None
-
-    # Setup voice channel
-    if arg == "voice":
-        # Meeting voice chat
-        if arg_voice == "meeting":
-            try:
-                channels["voice_meeting"] = text_channel
-                text = "Successfully setup <#{}> as the meeting voice channel.".format(str(channels["voice_meeting"].id))
-                embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = text)
-                await ctx.send(embed = embed)
-            except:
-                embed = discord.Embed(color = 0xff0000, title = "Channel Setup Failed", description = "Failed to setup the meeting voice channel.\nUse the format `<#channel_id>` to mention voice channels.")
-                await ctx.send(embed = embed)
-            return
-
-        # Wolf voice chat
-        elif arg_voice == "wolves":
-            try:
-                channels["voice_wolves"] = text_channel
-                text = "Successfully setup <#{}> as the wolves voice channel.".format(str(channels["voice_wolves"].id))
-                embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = text)
-                await ctx.send(embed = embed)
-            except:
-                embed = discord.Embed(color = 0xff0000, title = "Channel Setup Failed", description = "Failed to setup the wolves voice channel.\nUse the format `<#channel_id>` to mention voice channels.")
-                await ctx.send(embed = embed)
-            return
-
-    # Nothing happened
-    embed = discord.Embed(color = 0xff0000, title = "Invalid Arguments", description = "Invalid arguments supplied.\nUse `$help channel` for more details.")
-    await ctx.send(embed = embed)
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
 
 # --------------
 
 @client.command(pass_context = True, aliases = ["storechannel"])
 async def storechannels(ctx):
-    file = open("channels.txt", 'w')
+    # Check permissions
+    if check_perms(ctx):
+        file = open("channels.txt", 'w')
 
-    global channels
-    for channel in channels:
-        if channels[channel] == None:
-            file.write("None\n")
-        else:
-            file.write("{}\n".format(str(channels[channel].id)))
-    file.close()
+        global channels
+        for channel in channels:
+            if channels[channel] == None:
+                file.write("None\n")
+            else:
+                file.write("{}\n".format(str(channels[channel].id)))
+        file.close()
 
-    embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = "Successfully stored channels.")
-    await ctx.send(embed = embed)
+        embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Success", description = "Successfully stored channels.")
+        await ctx.send(embed = embed)
+
+    # Insufficient perms
+    else:
+        await insufficient_perms(ctx)
 
 @client.command(pass_context = True, aliases = ["loadchannel", "readchannels", "readchannel"])
 async def loadchannels(ctx):
-    file = open("channels.txt", 'r')
-    content = file.read()
-    text = content.split("\n")
-    file.close()
-    count = 0
+    # Check permissions
+    if check_perms(ctx):
+        file = open("channels.txt", 'r')
+        content = file.read()
+        text = content.split("\n")
+        file.close()
+        count = 0
 
-    async with ctx.channel.typing():
-        for i, c in enumerate(channels):
-            if text[i] != "None":
-                try:
-                    channels[c] = client.get_channel(int(text[i]))
-                    count += 1
-                except:
-                    await ctx.send("Failed to load the {} channel.".format(c))
-            else:
-                await ctx.send("There is no {} channel to load.".format(c))
+        async with ctx.channel.typing():
+            for i, c in enumerate(channels):
+                if text[i] != "None":
+                    try:
+                        channels[c] = client.get_channel(int(text[i]))
+                        count += 1
+                    except:
+                        await ctx.send("Failed to load the {} channel.".format(c))
+                else:
+                    await ctx.send("There is no {} channel to load.".format(c))
 
-            await asyncio.sleep(0.25)
+                await asyncio.sleep(0.25)
 
-    if count == 0:
-        embed = discord.Embed(color = 0xff0000, title = "Channel Setup Done", description = "Could not load any channels.")
+        if count == 0:
+            embed = discord.Embed(color = 0xff0000, title = "Channel Setup Done", description = "Could not load any channels.")
+        else:
+            embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Done", description = "Successfully loaded {} channels.".format(count))
+        await ctx.send(embed = embed)
+
+    # Insufficient perms
     else:
-        embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Done", description = "Successfully loaded {} channels.".format(count))
-    await ctx.send(embed = embed)
+        await insufficient_perms(ctx)
 
 # -----------------------
 
 @client.command(pass_context = True, aliases = ["listchannel"])
 async def listchannels(ctx):
-    description = ""
+    # Check permissions
+    if check_perms(ctx):
+        description = ""
 
-    global channels
-    for i, c in enumerate(channels):
-        # Text channel
-        if i <= 5:
-            description += "{} = {}\n".format(c.capitalize(), "<#{}>".format(channels[c].id) if channels[c] != None else "None")
+        global channels
+        for i, c in enumerate(channels):
+            # Text channel
+            if i <= 5:
+                description += "{} = {}\n".format(c.capitalize(), "<#{}>".format(channels[c].id) if channels[c] != None else "None")
 
-        # Voice channels:
-        elif i == 6:
-            description += "\nMeeting (Voice) = {}\n".format("<#{}>".format(channels[c].id) if channels[c] != None else "None")
-        elif i == 7:
-            description += "Wolves (Voice) = {}".format("<#{}>".format(channels[c].id) if channels[c] != None else "None")
+            # Voice channels:
+            elif i == 6:
+                description += "\nMeeting (Voice) = {}\n".format("<#{}>".format(channels[c].id) if channels[c] != None else "None")
+            elif i == 7:
+                description += "Wolves (Voice) = {}".format("<#{}>".format(channels[c].id) if channels[c] != None else "None")
 
-    embed = discord.Embed(color = 0x0080ff, title = "Channel List", description = description)
-    await ctx.send(embed = embed)
+        embed = discord.Embed(color = 0x0080ff, title = "Channel List", description = description)
+        await ctx.send(embed = embed)
+
+    # Insufficient perms
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
 # Player management
 @client.command(pass_context = True, aliases = ["add"])
 async def addplayer(ctx):
-    # Add player(s)
-    names_str = ""
-    for i, user in enumerate(ctx.message.mentions):
-        # Convert mentioned player into player class
-        new_player = players.Player(user, Player_Types.Human)
+    if check_perms(ctx):
+        # Add player(s)
+        names_str = ""
+        for i, user in enumerate(ctx.message.mentions):
+            # Convert mentioned player into player class
+            new_player = players.Player(user, Player_Types.Human)
 
-        # Attempt to add player
-        if players.Player_Manager.add_player(new_player):
-            # Format name for output string
-            names_str += "`{}`".format(new_player.name)
-            if len(ctx.message.mentions) > 1 and i == len(ctx.message.mentions) - 2:
-                names_str += " and "
-            elif i < len(ctx.message.mentions) - 2:
-                names_str += ", "
+            # Attempt to add player
+            if players.Player_Manager.add_player(new_player):
+                # Format name for output string
+                names_str += "`{}`".format(new_player.name)
+                if len(ctx.message.mentions) > 1 and i == len(ctx.message.mentions) - 2:
+                    names_str += " and "
+                elif i < len(ctx.message.mentions) - 2:
+                    names_str += ", "
 
-    # No players given
-    if names_str == "":
-        await ctx.send("No valid players given.")
-    # Valid players added to list
+        # No players given
+        if names_str == "":
+            await ctx.send("No valid players given.")
+        # Valid players added to list
+        else:
+            await ctx.send("Added {} to list of players.\nThere are now {} players.".format(names_str, len(players.Player_Manager.players)))
+
+    # Insufficient Perms
     else:
-        await ctx.send("Added {} to list of players.\nThere are now {} players.".format(names_str, len(players.Player_Manager.players)))
+        await insufficient_perms(ctx)
 
 # ------------
 
 @client.command(pass_context = True, aliases = ["remove"])
 async def removeplayer(ctx):
-    await ctx.send(players.Player_Manager.remove_player(ctx.message.mentions))
-
-@client.command(pass_context = True)
-async def listplayers(ctx):
-    await ctx.send(embed = players.Player_Manager.list_players())
+    if check_perms(ctx):
+        await ctx.send(players.Player_Manager.remove_player(ctx.message.mentions))
+    else:
+        await insufficient_perms(ctx)
 
 @client.command(pass_context = True)
 async def clearplayers(ctx):
-    await ctx.send(players.Player_Manager.clear_players())
+    if check_perms(ctx):
+        await ctx.send(players.Player_Manager.clear_players())
+    else:
+        await insufficient_perms(ctx)
+
+# ------------
+
+@client.command(pass_context = True)
+async def listplayers(ctx, *args):
+    if len(args) > 0:
+        # Mention players
+        if args[0].lower() == "mention":
+            if check_perms(ctx):
+                await ctx.send(players.Player_Manager.list_players_mention())
+            else:
+                await insufficient_perms(ctx)
+
+        # List with roles
+        elif args[0].lower() == "roles" or args[0].lower() == "role":
+            if check_perms(ctx, Perm_Level.Moderator):
+                await ctx.send(embed = players.Player_Manager.list_players_with_roles())
+            else:
+                await insufficient_perms(ctx)
+
+        # No type specified/generic list
+        else:
+            await ctx.send(embed = players.Player_Manager.list_players())
+
+    # Generic list
+    else:
+        await ctx.send(embed = players.Player_Manager.list_players())
 
 # ---------------------------------------------------------------------------------------
 
-# Global Variables
+# Start game
 bypass_player_limit = True
-start_confirm_message = None
-start_confirm_user = None
 
 # -------------------
 
 @client.command(pass_context = True)
 async def start(ctx):
     # Can't start if waiting for confirmation
-    global start_confirm_message
-    if not start_confirm_message == None:
+    global confirm_message, confirm_user
+    if not confirm_message["start"] == None:
         embed = discord.Embed(color = 0xff0000, title = "Awaiting Confirmation", description = "Already waiting on confirmation for game start.")
         await ctx.send(embed = embed)
         return
@@ -330,29 +401,31 @@ async def start(ctx):
     
     # Insufficient permission
     else:
-        await ctx.send(embed = insufficient_perms())
+        await insufficient_perms(ctx)
 
 # Asks if the user wants to start the game
 async def confirm_game_start(ctx, embed):
-    global start_confirm_message, start_confirm_user
+    global confirm_message, confirm_user
     local_confirm_message = await ctx.send(embed = embed)
-    start_confirm_message = local_confirm_message
-    start_confirm_user = ctx.message.author
+    confirm_message["start"] = local_confirm_message
+    confirm_user["start"] = ctx.message.author
     await add_confirm_reactions(local_confirm_message)
     # on_reaction_add event handles yes/no answer
 
     # Timeout if user has not reacted in time (10 seconds)
     await asyncio.sleep(10)
-    if local_confirm_message.id == start_confirm_message.id:
-        start_confirm_message = None
-        start_confirm_user = None
+    if confirm_message["start"] != None and local_confirm_message.id == confirm_message["start"].id:
+        confirm_message["start"] = None
+        confirm_user["start"] = None
         embed = discord.Embed(color = 0xff0000, title = "Timeout - Game Start", description = "Game start has been cancelled due to timing out.")
         await ctx.send(embed = embed)
 
 # ---------------
 
 async def on_start():
-    False
+    players.Player_Manager.distribute_roles()
+    global channels
+    await channels["moderator"].send("Roles distributed.")
 
 # ---------------
 
@@ -363,7 +436,7 @@ async def bypasslimit(ctx):
         bypass_player_limit = not bypass_player_limit
         await ctx.send("Player limit has been {}.".format("disabled" if bypass_player_limit else "enabled"))
     else:
-        await ctx.send(embed = insufficient_perms())
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -410,16 +483,46 @@ async def poll(ctx):
 # ---------------------------------------------------------------------------------------
 
 # Permissions
-def check_perms(ctx):
-    id = discord.utils.get(ctx.guild.roles, name="Moderator")
-    if id in ctx.author.roles:
-        return True
+def check_perms(ctx, level = Perm_Level.Admin):
+    # Admin level
+    if level == Perm_Level.Admin:
+        id = discord.utils.get(ctx.guild.roles, name="Gamemasters")
+        if id in ctx.author.roles:
+            return True
+        return False
+
+    # Moderator level
+    elif level == Perm_Level.Moderator:
+        id = discord.utils.get(ctx.guild.roles, name="Moderator")
+        if id in ctx.author.roles:
+            return True
+        return False
+
+    # Player level
+    elif level == Perm_Level.Player:
+        if check_perms(ctx, Perm_Level.Moderator):
+            return True
+
+        for player in players.Player_Manager.players:
+            if player.id == ctx.author.id:
+                return True
+        return False
+
     return False
 
-def insufficient_perms():
-	description = "You do not have permission to use this command."
-	embed = discord.Embed(color = 0xff0000, title = "Insufficient Permissions", description = description)
-	return embed
+async def insufficient_perms(ctx, level = Perm_Level.Admin):
+    embed = None
+    # Player
+    if level == Perm_Level.Player:
+        description = "You do not have permission to use this command right now.\nOnly active players may use this command."
+        embed = discord.Embed(color = 0xff0000, title = "Insufficient Permissions", description = description)
+
+    # Moderator or Admin
+    else:
+        description = "You do not have permission to use this command."
+        embed = discord.Embed(color = 0xff0000, title = "Insufficient Permissions", description = description)
+
+    await ctx.send(embed = embed)
 
 # ---------------------------------------------------------------------------------------
 
@@ -443,16 +546,16 @@ async def on_reaction_add(reaction, user):
     #await reaction.message.channel.send("Test")
 
     channel = reaction.message.channel
+    global confirm_message, confirm_user
 
     # Start confirmation
-    global start_confirm_message
-    if reaction.message.id == start_confirm_message.id and start_confirm_user == user:
+    if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
         if react_yes(reaction): # ✅
-            start_confirm_message = None
+            confirm_message["start"] = None
             await on_start()
 
         elif react_no(reaction): # ❌
-            start_confirm_message = None
+            confirm_message["start"] = None
             embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
             await channel.send(embed = embed)
         return
@@ -461,8 +564,7 @@ async def on_reaction_add(reaction, user):
 
 @client.command(pass_context = True)
 async def test(ctx):
-    text = ctx.message.content.replace("$test", "").strip()
-    await ctx.send(text)
+    await ctx.send("<@Shin'nai-sama#4076>")
 
 # ---------------------------------------------------------------------------------------
 
