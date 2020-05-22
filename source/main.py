@@ -25,10 +25,18 @@ from perm_levels import Perm_Level
 client = commands.Bot(command_prefix = '$')
 client.remove_command("help")
 
-# Console output on ready
+# Console output on connect and ready
+@client.event
+async def on_connect():
+    print("\n\n\nConnecting to Discord...")
+
+@client.event
+async def on_disconnect():
+    print("\nDisconnected from Discord.\n")
+
 @client.event
 async def on_ready():
-    print("\n\n\nWe have loggined in as {0.user}\n\n".format(client))
+    print("We have loggined in as {0.user}\n\n".format(client))
 
 # ---------------------------------------------------------------------------------------
 
@@ -92,7 +100,7 @@ async def help(ctx):
             description += "\n" + "$loadchannels - Loads the stored channels from the text document for use."
             description += "\n" + "$listchannels - Lists all the channels used for the game and their assigned channels."
 
-            description += "\n\n" + "$start - Starts the game."
+            description += "\n\n" + "$start - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
 
             embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Moderator Commands", description = description)
             await ctx.send(embed = embed)
@@ -332,6 +340,20 @@ async def clearplayers(ctx):
         await insufficient_perms(ctx)
 
 # ------------
+
+@help.command(pass_context = True)
+async def listplayers(ctx):
+    description = "`$listplayers`"
+    description += "\nLists all players currently assigned to the game."
+
+    description += "\n\n`$listplayers mention`"
+    description += "\nMentions all players currently assigned to the game. Requires administrator-level permissions."
+
+    description += "\n\n`$listplayers`"
+    description += "\nLists all players currently assigned to the game with their roles. Requires moderator-level permissions."
+
+    embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $listplayers", description = description)
+    await ctx.send(embed = embed)
 
 @client.command(pass_context = True)
 async def listplayers(ctx, *args):

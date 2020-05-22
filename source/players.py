@@ -152,13 +152,13 @@ class Player_Manager(object):
     # Start game
     @classmethod
     def distribute_roles(cls):
+        shuffle(cls.players)
         count = len(cls.players)
         wolf_count = int(count / 4)
         have_badger = random.randint(1, 100) < 50
         players = []
         for player in cls.players:
             players.append(player)
-        shuffle(players)
         
         try:
             # Wolves
