@@ -12,6 +12,7 @@ import players
 
 sys.path.append("")
 from settings import TOKEN
+from settings import DEVMODE
 
 # Import enums
 sys.path.append("source/enums")
@@ -22,7 +23,7 @@ from perm_levels import Perm_Level
 # ---------------------------------------------------------------------------------------
 
 # Bot setup
-client = commands.Bot(command_prefix = '$')
+client = commands.Bot(command_prefix = ('$' if DEVMODE != "TRUE" else "%"))
 client.remove_command("help")
 
 # Console output on connect and ready
@@ -41,66 +42,57 @@ async def on_ready():
 # ---------------------------------------------------------------------------------------
 
 # Global variables - Confirmation messages
-start_confirm_message = None
-start_confirm_user = None
-
 confirm_message = {
-    "start" : start_confirm_message
+    "start" : None
 }
 
 confirm_user = {
-    "start" : start_confirm_user
+    "start" : None
 }
 
 # Global variables - Channels
-channel_moderator = None
-channel_meeting = None
-channel_snake = None
-channel_spider = None
-channel_wolves = None
-channel_dead = None
-
-channel_voice_meeting = None
-channel_voice_wolves = None
-
 channels = {
-    "moderator" : channel_moderator,
-    "meeting" : channel_meeting,
-    "snake" : channel_snake,
-    "spider" : channel_spider,
-    "wolves" : channel_wolves,
-    "dead" : channel_dead,
+    "moderator" : None,
+    "meeting" : None,
+    "snake" : None,
+    "spider" : None,
+    "wolves" : None,
+    "dead" : None,
 
-    "voice_meeting" : channel_voice_meeting,
-    "voice_wolves" : channel_voice_wolves
+    "voice_meeting" : None,
+    "voice_wolves" : None
 }
 
 # ---------------------------------------------------------------------------------------
 
 @client.group(pass_context = True)
 async def help(ctx):
+    await asyncio.sleep(0.1)
+
     if ctx.invoked_subcommand is None:
         # Regular commands
-        description = "$help - Lists all available bot comamnds."
-        description += "\n" + "$poll - Starts a poll with the given text."
-        description += "\n" + "$ping - Test command that gives the bot\'s latency time."
+        description = "`$help` - Lists all available bot comamnds."
+        description += "\n" + "`$poll` - Starts a poll with the given text."
+        description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
 
         embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Commands", description = description)
         await ctx.send(embed = embed)
 
         # Moderator commands
         if check_perms(ctx):
-            description = "$add - Adds all given mentioned players to the game."
-            description += "\n" + "$remove - Removes all given mentioned players from the game."
-            description += "\n" + "$listplayers - Lists all players currently in the game."
-            description += "\n" + "$clearplayers - Removes all players from the game."
+            description = "`$gettingstarted` - Provides information on how to use the bot."
 
-            description += "\n\n" + "$channel - Sets up the channels for the game. Use `$help channel` for more info."
-            description += "\n" + "$storechannels - Stores the channels into a text document for later use."
-            description += "\n" + "$loadchannels - Loads the stored channels from the text document for use."
-            description += "\n" + "$listchannels - Lists all the channels used for the game and their assigned channels."
+            description += "\n\n" + "`$add` - Adds all given mentioned players to the game."
+            description += "\n" + "`$remove` - Removes all given mentioned players from the game."
+            description += "\n" + "`$listplayers` - Lists all players currently in the game. Use `$help listplayers` for more info."
+            description += "\n" + "`$clearplayers` - Removes all players from the game."
 
-            description += "\n\n" + "$start - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
+            description += "\n\n" + "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
+            description += "\n" + "`$storechannels` - Stores the channels into a text document for later use."
+            description += "\n" + "`$loadchannels` - Loads the stored channels from the text document for use."
+            description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
+
+            description += "\n\n" + "`$start` - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
 
             embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Moderator Commands", description = description)
             await ctx.send(embed = embed)
@@ -108,14 +100,36 @@ async def help(ctx):
         # Dev commands
             show_dev_commands = True
             if show_dev_commands:
-                description = "$bypasslimit - Toggles the player limit of 12 for the game on and off."
+                description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
 
                 embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Dev Commands", description = description)
                 await ctx.send(embed = embed)
 
 @client.command(pass_context = True)
+async def gettingstarted(ctx):
+    await asyncio.sleep(0.1)
+
+    if check_perms(ctx):
+        description = "To start, you first must set up the channels for the game. See `$help channels` for more information."
+        description = "To check if the channels have already been setup, use the `$listchannels` command."
+
+        description += "\n\nTo add players to the game, use the `$add` command, following by mentions of the players you wish to add."
+        description += "\n\nOnce all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles."
+        description += "\nWARNING - as of right now, the bot has no further functions that will automatically run the game."
+
+        description += "\n\nAdditionally, there is a `$poll` command that players can use to start polls."
+        description += "\nThere's also a `$timer` command for moderators to use to create manual timers if needed."
+
+        embed = discord.Embed(color = 0x555555, title = "Getting Started with Shin'nai-sama", description = description)
+        await ctx.send(embed = embed)
+
+    else:
+        await insufficient_perms(ctx)
+
+@client.command(pass_context = True)
 async def ping(ctx):
-	await ctx.send(":ping_pong: Pong! Latency: {} ms".format(round(client.latency, 1)))
+    await asyncio.sleep(0.1)
+    await ctx.send(":ping_pong: Pong! Latency: {} ms".format(round(client.latency, 1)))
 
 # ---------------------------------------------------------------------------------------
 
@@ -123,6 +137,8 @@ async def ping(ctx):
 
 @help.command(pass_context = True, aliases = ["channels"])
 async def channel(ctx):
+    await asyncio.sleep(0.1)
+
     description = "Text Channels:\n`$channel <channel_name> <channel_mention>`"
     description += "\nSets up the specified text channel as the channel mentioned.\nValid channel names are:"
     description += "\n • moderator"
@@ -136,7 +152,7 @@ async def channel(ctx):
     description += "\nSets up the specified voice channel as the channel mentioned.\nValid channel names are:"
     description += "\n • meeting"
     description += "\n • wolves"
-    description += "\nTo mention a voice channel, use the format `<#channel_id>`, where `channel_id` is the id number of the channel."
+    description += "\nTo mention a voice channel, use the format `<#channel_id>`, where `channel_id` is the id number of the channel. "
     description += "To access the id of a channel, you must be in Discord's development mode."
 
     embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $channel", description = description)
@@ -144,6 +160,8 @@ async def channel(ctx):
 
 @client.command(pass_context = True, aliases = ["channels"])
 async def channel(ctx, *args):
+    await asyncio.sleep(0.1)
+
     # Check permissions
     if check_perms(ctx):
         global channels
@@ -212,6 +230,8 @@ async def channel(ctx, *args):
 
 @client.command(pass_context = True, aliases = ["storechannel"])
 async def storechannels(ctx):
+    await asyncio.sleep(0.1)
+
     # Check permissions
     if check_perms(ctx):
         file = open("channels.txt", 'w')
@@ -268,6 +288,8 @@ async def loadchannels(ctx):
 
 @client.command(pass_context = True, aliases = ["listchannel"])
 async def listchannels(ctx):
+    await asyncio.sleep(0.1)
+
     # Check permissions
     if check_perms(ctx):
         description = ""
@@ -296,6 +318,8 @@ async def listchannels(ctx):
 # Player management
 @client.command(pass_context = True, aliases = ["add"])
 async def addplayer(ctx):
+    await asyncio.sleep(0.1)
+
     if check_perms(ctx):
         # Add player(s)
         names_str = ""
@@ -327,6 +351,7 @@ async def addplayer(ctx):
 
 @client.command(pass_context = True, aliases = ["remove"])
 async def removeplayer(ctx):
+    await asyncio.sleep(0.1)
     if check_perms(ctx):
         await ctx.send(players.Player_Manager.remove_player(ctx.message.mentions))
     else:
@@ -334,6 +359,7 @@ async def removeplayer(ctx):
 
 @client.command(pass_context = True)
 async def clearplayers(ctx):
+    await asyncio.sleep(0.1)
     if check_perms(ctx):
         await ctx.send(players.Player_Manager.clear_players())
     else:
@@ -343,13 +369,15 @@ async def clearplayers(ctx):
 
 @help.command(pass_context = True)
 async def listplayers(ctx):
+    await asyncio.sleep(0.1)
+
     description = "`$listplayers`"
     description += "\nLists all players currently assigned to the game."
 
     description += "\n\n`$listplayers mention`"
     description += "\nMentions all players currently assigned to the game. Requires administrator-level permissions."
 
-    description += "\n\n`$listplayers`"
+    description += "\n\n`$listplayers roles`"
     description += "\nLists all players currently assigned to the game with their roles. Requires moderator-level permissions."
 
     embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $listplayers", description = description)
@@ -357,6 +385,8 @@ async def listplayers(ctx):
 
 @client.command(pass_context = True)
 async def listplayers(ctx, *args):
+    await asyncio.sleep(0.1)
+
     if len(args) > 0:
         # Mention players
         if args[0].lower() == "mention":
@@ -389,6 +419,8 @@ bypass_player_limit = True
 
 @client.command(pass_context = True)
 async def start(ctx):
+    await asyncio.sleep(0.1)
+
     # Can't start if waiting for confirmation
     global confirm_message, confirm_user
     if not confirm_message["start"] == None:
@@ -453,6 +485,7 @@ async def on_start():
 
 @client.command(pass_context = True)
 async def bypasslimit(ctx):
+    await asyncio.sleep(0.1)
     if check_perms(ctx):
         global bypass_player_limit
         bypass_player_limit = not bypass_player_limit
@@ -492,6 +525,8 @@ async def bypasslimit(ctx):
 
 @client.command(pass_context = True)
 async def poll(ctx):
+    await asyncio.sleep(0.1)
+
     text = ctx.message.content.replace("$poll", "").strip()
     embed = discord.Embed(title = "Poll by {}".format(ctx.message.author.display_name), description = text)
     embed.set_thumbnail(url = ctx.message.author.avatar_url)
@@ -586,6 +621,8 @@ async def on_reaction_add(reaction, user):
 
 @client.command(pass_context = True)
 async def test(ctx):
+    await asyncio.sleep(0.1)
+
     await ctx.send("<@Shin'nai-sama#4076>")
 
 # ---------------------------------------------------------------------------------------

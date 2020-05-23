@@ -4,3 +4,4 @@ load_dotenv()
 import os
 
 TOKEN = os.getenv("TOKEN")
+DEVMODE = os.getenv("DEVMODE")
