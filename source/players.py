@@ -124,7 +124,7 @@ class Player_Manager(object):
     # Listing players
     @classmethod
     def list_players(cls):
-        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
+        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True))
 
     @classmethod
     def list_players_mention(cls):
@@ -132,7 +132,7 @@ class Player_Manager(object):
 
     @classmethod
     def list_players_with_roles(cls):
-        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(role = True))
+        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True, role = True))
 
     @classmethod
     def list_players_raw(cls, mention = False, role = False):
@@ -198,6 +198,6 @@ class Player_Manager(object):
                 cls.humans.append(players.pop())
 
         except:
-            print("error")
+            print("Error - not enough players to fully distribute roles.")
             return False
         return True

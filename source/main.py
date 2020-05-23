@@ -81,25 +81,30 @@ async def help(ctx):
         # Moderator commands
         if check_perms(ctx):
             description = "`$gettingstarted` - Provides information on how to use the bot."
+            embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Moderator Commands", description = description)
 
-            description += "\n\n" + "`$add` - Adds all given mentioned players to the game."
+            description = "`$add` - Adds all given mentioned players to the game."
             description += "\n" + "`$remove` - Removes all given mentioned players from the game."
             description += "\n" + "`$listplayers` - Lists all players currently in the game. Use `$help listplayers` for more info."
             description += "\n" + "`$clearplayers` - Removes all players from the game."
+            embed.add_field(name = "Player Management", value = description, inline = False)
 
-            description += "\n\n" + "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
+            description = "\n\n" + "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
             description += "\n" + "`$storechannels` - Stores the channels into a text document for later use."
             description += "\n" + "`$loadchannels` - Loads the stored channels from the text document for use."
             description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
+            embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description += "\n\n" + "`$start` - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
+            description = "\n\n" + "`$start` - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
+            embed.add_field(name = "Game Start", value = description, inline = False)
 
-            embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Moderator Commands", description = description)
+            description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
+            embed.add_field(name = "Miscellaneous", value = description, inline = False)
+
             await ctx.send(embed = embed)
 
         # Dev commands
-            show_dev_commands = True
-            if show_dev_commands:
+            if ctx.author.id == 221115928933302272:
                 description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
 
                 embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Dev Commands", description = description)
@@ -255,30 +260,37 @@ async def storechannels(ctx):
 async def loadchannels(ctx):
     # Check permissions
     if check_perms(ctx):
-        file = open("channels.txt", 'r')
-        content = file.read()
-        text = content.split("\n")
-        file.close()
-        count = 0
+        try:
+            file = open("channels.txt", 'r')
+            content = file.read()
+            text = content.split("\n")
+            file.close()
+            count = 0
 
-        async with ctx.channel.typing():
-            for i, c in enumerate(channels):
-                if text[i] != "None":
-                    try:
-                        channels[c] = client.get_channel(int(text[i]))
-                        count += 1
-                    except:
-                        await ctx.send("Failed to load the {} channel.".format(c))
-                else:
-                    await ctx.send("There is no {} channel to load.".format(c))
+            async with ctx.channel.typing():
+                for i, c in enumerate(channels):
+                    if text[i] != "None":
+                        try:
+                            channels[c] = client.get_channel(int(text[i]))
+                            count += 1
+                        except:
+                            await ctx.send("Failed to load the {} channel.".format(c))
+                    else:
+                        await ctx.send("There is no {} channel to load.".format(c))
 
-                await asyncio.sleep(0.25)
+                    await asyncio.sleep(0.25)
 
-        if count == 0:
-            embed = discord.Embed(color = 0xff0000, title = "Channel Setup Done", description = "Could not load any channels.")
-        else:
-            embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Done", description = "Successfully loaded {} channels.".format(count))
-        await ctx.send(embed = embed)
+            if count == 0:
+                embed = discord.Embed(color = 0xff0000, title = "Channel Setup Done", description = "Could not load any channels.")
+            else:
+                embed = discord.Embed(color = 0x00ff00, title = "Channel Setup Done", description = "Successfully loaded {} channels.".format(count))
+            await ctx.send(embed = embed)
+
+        # Failed to load
+        except:
+            embed = discord.Embed(color = 0xff0000, title = "Error Loading Channels", description = "There was an error in loading the channels. \
+                This may occur if channels have never been previously stored before.")
+            await ctx.send(embed = embed)
 
     # Insufficient perms
     else:
@@ -409,6 +421,7 @@ async def listplayers(ctx, *args):
     # Generic list
     else:
         await ctx.send(embed = players.Player_Manager.list_players())
+# TODO - while game is in progress, roles are DM'd instead of sent in chat
 
 # ---------------------------------------------------------------------------------------
 
@@ -440,17 +453,22 @@ async def start(ctx):
 
         # Valid number of players
         if number_of_players >= 12:
-            embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\n\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw()))
+            embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\n\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirm_game_start(ctx, embed)
 
         # Confirm if player limit should be ignored
-        elif bypass_player_limit:
-            embed = discord.Embed(color = 0xffff00, title = "Not Enough Players", description = "There are only {} out of the standard minimum of 12 players in the game:\n\n{}\nThe game may not function properly. Are you sure you want to begin?".format(number_of_players, players.Player_Manager.list_players_raw()))
+        elif bypass_player_limit and number_of_players > 0:
+            embed = discord.Embed(color = 0xffff00, title = "Not Enough Players", description = "There are only {} out of the standard minimum of 12 players in the game:\n\n{}\nThe game may not function properly. Are you sure you want to begin?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirm_game_start(ctx, embed)
+
+        # No players
+        elif number_of_players == 0:
+            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "No players are currently in the game.")
+            await ctx.send(embed = embed)
 
         # Not enough players
         else:
-            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "There are only {} out of the minimum of 12 players required for the game:\n\n{}".format(number_of_players, players.Player_Manager.list_players_raw()))
+            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "There are only {} out of the minimum of 12 players required for the game:\n\n{}".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await ctx.send(embed = embed)
     
     # Insufficient permission
@@ -476,22 +494,30 @@ async def confirm_game_start(ctx, embed):
 
 # ---------------
 
-async def on_start():
-    players.Player_Manager.distribute_roles()
+async def on_start(user, fallback_channel):
     global channels
-    await channels["moderator"].send("Roles distributed.")
+    if channels["moderator"] != None:
+        players.Player_Manager.distribute_roles()
+        dm = await get_dm_channel(user)
+
+        await dm.send(embed = players.Player_Manager.list_players_with_roles())
+        await channels["moderator"].send("Roles have been distributed, and have been privately sent to {}.".format(user.display_name))
+        #await channels["moderator"].send("Roles distributed.", embed = players.Player_Manager.list_players_with_roles())
+
+    else:
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "The channels have not been setup. Failed to start game.")
+        await fallback_channel.send(embed = embed)
 
 # ---------------
 
 @client.command(pass_context = True)
 async def bypasslimit(ctx):
     await asyncio.sleep(0.1)
-    if check_perms(ctx):
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
         global bypass_player_limit
         bypass_player_limit = not bypass_player_limit
         await ctx.send("Player limit has been {}.".format("disabled" if bypass_player_limit else "enabled"))
-    else:
-        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -537,9 +563,30 @@ async def poll(ctx):
     await message.add_reaction('👎')
     await message.add_reaction('🤷')
 
+@client.command(pass_context = True)
+async def timer(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    if check_perms(ctx):
+        try:
+            if float(args[0]) > 0:
+                await ctx.send("**Starting a timer for {} minutes for {}...**".format(args[0], ctx.author.display_name))
+                await asyncio.sleep(float(args[0]) * 60)
+                await ctx.send("**TIMER FOR {} MINUTES BY {} HAS ENDED.**".format(args[0], ctx.author.mention))
+
+            else:
+                raise Exception("Invalid argument.")
+
+        except:
+            embed = discord.Embed(color = 0xff0000, title = "Invalid Arguments", description = "Please enter a valid number!")
+            await ctx.send(embed = embed)
+
+    else:
+        await insufficient_perms(ctx)
+
 # ---------------------------------------------------------------------------------------
 
-# Permissions
+# Permissions/Utility
 def check_perms(ctx, level = Perm_Level.Admin):
     # Admin level
     if level == Perm_Level.Admin:
@@ -581,6 +628,12 @@ async def insufficient_perms(ctx, level = Perm_Level.Admin):
 
     await ctx.send(embed = embed)
 
+async def get_dm_channel(user):
+    channel = user.dm_channel
+    if channel == None:
+        channel = await user.create_dm()
+    return channel
+
 # ---------------------------------------------------------------------------------------
 
 async def add_confirm_reactions(message):
@@ -609,7 +662,7 @@ async def on_reaction_add(reaction, user):
     if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
         if react_yes(reaction): # ✅
             confirm_message["start"] = None
-            await on_start()
+            await on_start(user, reaction.message.channel)
 
         elif react_no(reaction): # ❌
             confirm_message["start"] = None
@@ -623,7 +676,10 @@ async def on_reaction_add(reaction, user):
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    await ctx.send("<@Shin'nai-sama#4076>")
+    channel = ctx.author.dm_channel
+    if channel == None:
+        channel = await ctx.author.create_dm()
+    await channel.send("test")
 
 # ---------------------------------------------------------------------------------------
 
