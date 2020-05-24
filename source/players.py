@@ -1,8 +1,8 @@
 import discord
 
 import sys
-sys.path.append('source/enums')
-from player_types import Player_Types
+sys.path.append('source/data')
+from enums import Player_Types
 
 import random
 from random import shuffle
@@ -127,10 +127,6 @@ class Player_Manager(object):
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True))
 
     @classmethod
-    def list_players_mention(cls):
-        return cls.list_players_raw(mention = True)
-
-    @classmethod
     def list_players_with_roles(cls):
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True, role = True))
 
@@ -155,7 +151,10 @@ class Player_Manager(object):
         shuffle(cls.players)
         count = len(cls.players)
         wolf_count = int(count / 4)
+
+        # TODO - adjusting badger chance depending on wolf-human ratio
         have_badger = random.randint(1, 100) < 50
+
         players = []
         for player in cls.players:
             players.append(player)
