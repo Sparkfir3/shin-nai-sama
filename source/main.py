@@ -85,7 +85,8 @@ async def help(ctx):
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
             description = "\n\n" + "`$start` - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
-            embed.add_field(name = "Game Start", value = description, inline = False)
+            description += "\n" + "`$reset` - Forcefully ends and resets the game."
+            embed.add_field(name = "Game Management", value = description, inline = False)
 
             description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
@@ -95,6 +96,8 @@ async def help(ctx):
         # Dev commands
             if ctx.author.id == 221115928933302272:
                 description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
+                description += "\n" + "`$allowdupes` - Toggles whether or not duplicate players are allowed."
+                description += "\n" + "`$quickstart` - Quickly sets up the game for testing."
 
                 embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Dev Commands", description = description)
                 await ctx.send(embed = embed)
@@ -124,6 +127,49 @@ async def gettingstarted(ctx):
 async def ping(ctx):
     await asyncio.sleep(0.1)
     await ctx.send("🏓 Pong! Latency: {} ms".format(round(client.latency, 1)))
+
+# ---------------------------------------------------------------------------------------
+
+# Dev commands
+allow_duplicate_players = False
+@client.command(pass_context = True, aliases = ["allowdupes"])
+async def allowduplicates(ctx):
+    await asyncio.sleep(0.1)
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
+        global allow_duplicate_players
+        allow_duplicate_players = not allow_duplicate_players
+        await ctx.send("Duplicate players have been {}.".format("enabled" if allow_duplicate_players else "disabled"))
+
+bypass_player_limit = False
+@client.command(pass_context = True)
+async def bypasslimit(ctx):
+    await asyncio.sleep(0.1)
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
+        global bypass_player_limit
+        bypass_player_limit = not bypass_player_limit
+        await ctx.send("Player limit has been {}.".format("disabled" if bypass_player_limit else "enabled"))
+
+@client.command(pass_context = True)
+async def quickstart(ctx):
+    await asyncio.sleep(0.1)
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
+        global bypass_player_limit
+        bypass_player_limit = True
+        global allow_duplicate_players
+        allow_duplicate_players = True
+        
+        async with ctx.channel.typing():
+            await loadchannels(ctx)
+            await asyncio.sleep(0.1)
+            if len(ctx.message.mentions) > 0:
+                await asyncio.sleep(0.1)
+                for i in range(10):
+                    await addplayer(ctx)
+
+            await ctx.send("Quick start finished.")
 
 # ---------------------------------------------------------------------------------------
 
@@ -323,12 +369,13 @@ async def addplayer(ctx):
     if check_perms(ctx):
         # Add player(s)
         names_str = ""
+        global allow_duplicate_players
         for i, user in enumerate(ctx.message.mentions):
             # Convert mentioned player into player class
             new_player = players.Player(user, Player_Types.Human)
 
             # Attempt to add player
-            if players.Player_Manager.add_player(new_player):
+            if players.Player_Manager.add_player(new_player, allow_dupes = allow_duplicate_players):
                 # Format name for output string
                 names_str += "`{}`".format(new_player.name)
                 if len(ctx.message.mentions) > 1 and i == len(ctx.message.mentions) - 2:
@@ -414,10 +461,6 @@ async def listplayers(ctx, *args):
 # ---------------------------------------------------------------------------------------
 
 # Start game
-bypass_player_limit = True
-
-# -------------------
-
 @client.command(pass_context = True)
 async def start(ctx):
     await asyncio.sleep(0.1)
@@ -463,17 +506,6 @@ async def start(ctx):
     else:
         await insufficient_perms(ctx)
 
-# ---------------
-
-@client.command(pass_context = True)
-async def bypasslimit(ctx):
-    await asyncio.sleep(0.1)
-    # Only Sparkfire can use this command
-    if check_perms(ctx) and ctx.author.id == 221115928933302272:
-        global bypass_player_limit
-        bypass_player_limit = not bypass_player_limit
-        await ctx.send("Player limit has been {}.".format("disabled" if bypass_player_limit else "enabled"))
-
 # ---------------------------------------------------------------------------------------
 
 # TODO - morning
@@ -501,6 +533,12 @@ async def bypasslimit(ctx):
 # ---------------------------------------------------------------------------------------
 
 # TODO - end game
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True, aliases = ["reset"])
+async def resetgame(ctx):
+    await gameplay.reset_game(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -569,10 +607,7 @@ async def on_reaction_add(reaction, user):
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    channel = ctx.author.dm_channel
-    if channel == None:
-        channel = await ctx.author.create_dm()
-    await channel.send("test")
+    await ctx.send(players.Player_Manager.snake.name)
 
 # ---------------------------------------------------------------------------------------
 

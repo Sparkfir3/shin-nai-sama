@@ -9,28 +9,44 @@ from random import shuffle
 
 # Stores information about each plater
 class Player(object):
-    def __init__(self, player_id, player_type):
-        self._playerId = player_id.id
-        self._name = "{}#{}".format(player_id.name.replace("@", ""), player_id.discriminator)
+    def __init__(self, user_data, player_type):
+        self._user = user_data
         self._type = player_type
+        self._death_message = "Alive"
 
     # Getters
     @property
+    def user(self):
+        return self._user
+
+    @property
     def id(self):
-        return self._playerId
+        return self._user.id
 
     @property
     def name(self):
-        return self._name
+        return "{}#{}".format(self.user.name.replace("@", ""), self.user.discriminator)
 
     @property
     def type(self):
         return self._type
 
+    @property
+    def death_message(self):
+        return self._death_message
+
+    @property
+    def is_dead(self):
+        return self._death_message == "Alive"
+
     # Setters
     @type.setter
     def type(self, new_type):
         self._type = new_type
+
+    @type.setter
+    def death(self, new_string):
+        self._type = new_string
 
     # Other
     def is_human(self):
@@ -87,10 +103,11 @@ class Player_Manager(object):
 
     # Player management
     @classmethod
-    def add_player(cls, player):
-        for p in cls.players:
-            if p.name == player.name:
-                return False
+    def add_player(cls, player, allow_dupes = False):
+        if not allow_dupes:
+            for p in cls.players:
+                if p.name == player.name:
+                    return False
 
         cls.players.append(player)
         return True
@@ -148,7 +165,6 @@ class Player_Manager(object):
     # Start game
     @classmethod
     def distribute_roles(cls):
-        shuffle(cls.players)
         count = len(cls.players)
         wolf_count = int(count / 4)
 
@@ -158,6 +174,7 @@ class Player_Manager(object):
         players = []
         for player in cls.players:
             players.append(player)
+        shuffle(players)
         
         try:
             # Wolves
