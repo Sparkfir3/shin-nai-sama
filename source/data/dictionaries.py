@@ -2,11 +2,13 @@ import discord
 
 # Confirmation messages
 confirm_message = {
-    "start" : None
+    "start" : None,
+    "roles" : None
 }
 
 confirm_user = {
-    "start" : None
+    "start" : None,
+    "roles" : None
 }
 
 # Channels

@@ -2,6 +2,7 @@ import discord
 
 import players
 
+import asyncio
 import sys
 sys.path.append('source/data')
 from dictionaries import channels
@@ -10,9 +11,11 @@ from enums import Game_Phase
 
 sys.path.append('source/utility')
 from misc import get_dm_channel
+import confirmations
 
 game_phase = Game_Phase.Null
 
+# Sets up the game and starts it
 async def on_start(user, fallback_channel):
     global channels
 
@@ -29,46 +32,80 @@ async def on_start(user, fallback_channel):
 
     # Throw error if not enough players
     if len(players.Player_Manager.players) < 7:
-        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There are not enough players to properly run the game. Failed to start the game.")
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There are not enough players to properly run the game without errors. Failed to start the game.")
         await fallback_channel.send(embed = embed)
         return
 
     try:
+        global game_phase
+        game_phase = Game_Phase.Starting
+
         # Distribute roles
         players.Player_Manager.distribute_roles()
         dm = await get_dm_channel(user)
-
         await dm.send(embed = players.Player_Manager.list_players_with_roles())
-        await fallback_channel.send("Roles have been distributed, and have been privately sent to {}.".format(user.display_name))
 
-        # DM players - humans
-        for player in players.Player_Manager.humans:
-            dm = await get_dm_channel(player.user)
-            await dm.send(start_role_messages["human"])
-
-        # DM players - monkeys
-        dm = await get_dm_channel(players.Player_Manager.monkeys[0].user)
-        await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[1].name))
-        
-        dm = await get_dm_channel(players.Player_Manager.monkeys[1].user)
-        await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
-        
-        # DM players - power roles
-        dm = await get_dm_channel(players.Player_Manager.snake.user)
-        await dm.send(start_role_messages["snake"])
-        
-        dm = await get_dm_channel(players.Player_Manager.spider.user)
-        await dm.send(start_role_messages["spider"])
-        
-        dm = await get_dm_channel(players.Player_Manager.crow.user)
-        await dm.send(start_role_messages["crow"])
+        # Confirm roles
+        await asyncio.sleep(1)
+        message = await fallback_channel.send("Roles have been distributed, and have been privately sent to {}. Are you okay with this role distribution?".format(user.display_name))
+        await confirmations.confirm_roles(fallback_channel, message, user)
 
     except Exception as inst:
         embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}.".format(inst))
         await fallback_channel.send(embed = embed)
 
+# Called after user confirms role distribution
+async def continue_start(channel):
+    # DM players
+    async with channel.typing():
+        await dm_roles()
+        await channel.send("Players have been sent their roles.")
+
+async def dm_roles():
+    await asyncio.sleep(1)
+
+    # DM players - humans
+    for player in players.Player_Manager.humans:
+        dm = await get_dm_channel(player.user)
+        await dm.send(start_role_messages["human"])
+    await asyncio.sleep(0.1)
+
+    # DM players - monkeys
+    dm = await get_dm_channel(players.Player_Manager.monkeys[0].user)
+    await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[1].name))
+    await asyncio.sleep(0.1)
+    
+    dm = await get_dm_channel(players.Player_Manager.monkeys[1].user)
+    await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
+    await asyncio.sleep(0.1)
+    
+    # DM players - power roles
+    dm = await get_dm_channel(players.Player_Manager.snake.user)
+    await dm.send(start_role_messages["snake"])
+    await asyncio.sleep(0.1)
+    
+    dm = await get_dm_channel(players.Player_Manager.spider.user)
+    await dm.send(start_role_messages["spider"])
+    await asyncio.sleep(0.1)
+    
+    dm = await get_dm_channel(players.Player_Manager.crow.user)
+    await dm.send(start_role_messages["crow"])
+    await asyncio.sleep(0.1)
+
+    # DM badger
+    if players.Player_Manager.badger != None:
+        dm = await get_dm_channel(players.Player_Manager.badger.user)
+        await dm.send(start_role_messages["human"])
+        await asyncio.sleep(0.1)
+
+# Called by the reset command
 async def reset_game(ctx):
+    await on_reset()
+    await ctx.send("Game has been reset.")
+
+# Resets the game; called whenever a reset is needed
+async def on_reset():
     global game_phase
     game_phase = Game_Phase.Null
 
-    await ctx.send("Game has been reset.")
+    players.Player_Manager.reset()

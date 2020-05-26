@@ -93,7 +93,7 @@ async def help(ctx):
 
             await ctx.send(embed = embed)
 
-        # Dev commands
+            # Dev commands
             if ctx.author.id == 221115928933302272:
                 description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
                 description += "\n" + "`$allowdupes` - Toggles whether or not duplicate players are allowed."
@@ -169,7 +169,9 @@ async def quickstart(ctx):
                 for i in range(10):
                     await addplayer(ctx)
 
-            await ctx.send("Quick start finished.")
+            await asyncio.sleep(0.5)
+
+        await start(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -597,6 +599,19 @@ async def on_reaction_add(reaction, user):
 
         elif reaction.emoji == '❌':
             confirm_message["start"] = None
+            embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+            await channel.send(embed = embed)
+        return
+
+    # Role distribution confirmation
+    if confirm_message["roles"] != None and reaction.message.id == confirm_message["roles"].id and confirm_user["roles"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["roles"] = None
+            await gameplay.continue_start(reaction.message.channel)
+
+        elif reaction.emoji == '❌':
+            confirm_message["roles"] = None
+            await gameplay.on_reset()
             embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
             await channel.send(embed = embed)
         return

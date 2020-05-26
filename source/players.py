@@ -217,3 +217,31 @@ class Player_Manager(object):
             print("Error - not enough players to fully distribute roles.")
             return False
         return True
+
+    # -------------------------------------------
+
+    # Other
+    @classmethod
+    def reset(cls):
+        # Humans
+        cls.humans_all = []
+        cls.humans = []
+
+        cls.snake = None
+        cls.snake_alive = False
+
+        cls.spider = None
+        cls.spider_alive = False
+
+        cls.monkeys_all = []
+        cls.monkeys = []
+
+        cls.crow = None
+        cls.crow_alive = False
+
+        cls.badger = None
+        cls.badger_alive = False
+
+        # Wolves
+        cls.wolves_all = []
+        cls.wolves = []
