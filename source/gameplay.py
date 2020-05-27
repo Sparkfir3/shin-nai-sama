@@ -14,10 +14,12 @@ from misc import get_dm_channel
 import confirmations
 
 game_phase = Game_Phase.Null
+day_number = 0
 
 # Sets up the game and starts it
 async def on_start(user, fallback_channel):
     global channels
+    await on_reset()
 
     # Throw error if channels are not setup
     try:
@@ -51,15 +53,28 @@ async def on_start(user, fallback_channel):
         await confirmations.confirm_roles(fallback_channel, message, user)
 
     except Exception as inst:
+        on_reset()
         embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}.".format(inst))
         await fallback_channel.send(embed = embed)
 
 # Called after user confirms role distribution
 async def continue_start(channel):
-    # DM players
-    async with channel.typing():
-        await dm_roles()
-        await channel.send("Players have been sent their roles.")
+    await asyncio.sleep(0.5)
+    try:
+        async with channel.typing():
+            # DM players
+            await dm_roles()
+            await channel.send("Humans, monkeys, and the crow have been sent their roles.")
+
+            # Setup channels
+            await asyncio.sleep(0.5)
+            await setup_channels_perms(channel)
+
+    # Error
+    except Exception as inst:
+        await on_reset()
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}.".format(inst))
+        await channel.send(embed = embed)
 
 async def dm_roles():
     await asyncio.sleep(1)
@@ -79,15 +94,7 @@ async def dm_roles():
     await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
     await asyncio.sleep(0.1)
     
-    # DM players - power roles
-    dm = await get_dm_channel(players.Player_Manager.snake.user)
-    await dm.send(start_role_messages["snake"])
-    await asyncio.sleep(0.1)
-    
-    dm = await get_dm_channel(players.Player_Manager.spider.user)
-    await dm.send(start_role_messages["spider"])
-    await asyncio.sleep(0.1)
-    
+    # DM players - crow    
     dm = await get_dm_channel(players.Player_Manager.crow.user)
     await dm.send(start_role_messages["crow"])
     await asyncio.sleep(0.1)
@@ -98,6 +105,37 @@ async def dm_roles():
         await dm.send(start_role_messages["human"])
         await asyncio.sleep(0.1)
 
+async def setup_channels_perms(channel):
+    global channels
+
+    # Wolves
+    mention_wolves = ""
+    for wolf in players.Player_Manager.wolves:
+        await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
+        mention_wolves += "{} ".format(wolf.user.mention)
+        await asyncio.sleep(0.5)
+    await asyncio.sleep(1)
+    await channels["wolves"].send("{}\n\n{}".format(mention_wolves.strip(), start_role_messages["wolves"]))
+
+    await asyncio.sleep(0.5)
+    await channel.send("Wolves have been setup.")
+
+    # Snake
+    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
+    await asyncio.sleep(1)
+    await channels["snake"].send("{}\n\n{}".format(players.Player_Manager.snake.user.mention, start_role_messages["snake"]))
+
+    await asyncio.sleep(0.5)
+    await channel.send("Snake has been setup.")
+
+    # Spider
+    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
+    await asyncio.sleep(1)
+    await channels["spider"].send("{}\n\n{}".format(players.Player_Manager.spider.user.mention, start_role_messages["spider"]))
+
+    await asyncio.sleep(0.5)
+    await channel.send("Spider has been setup.")
+
 # Called by the reset command
 async def reset_game(ctx):
     await on_reset()
@@ -105,7 +143,16 @@ async def reset_game(ctx):
 
 # Resets the game; called whenever a reset is needed
 async def on_reset():
-    global game_phase
+    global game_phase, day_number
     game_phase = Game_Phase.Null
+    day_number = 0
+
+    # Remove players from channels
+    try:
+        await channels["wolves"].edit(sync_permissions = True)
+        await channels["snake"].edit(sync_permissions = True)
+        await channels["spider"].edit(sync_permissions = True)
+    except:
+        None
 
     players.Player_Manager.reset()
