@@ -84,11 +84,12 @@ async def help(ctx):
             description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "\n\n" + "`$start` - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
+            description = "\n\n" + "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
             description += "\n" + "`$reset` - Forcefully ends and resets the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
             description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
+            description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100. **WARNING - THIS ACTION CANNOT BE CANCELLED.**"
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
             await ctx.send(embed = embed)
@@ -578,6 +579,19 @@ async def timer(ctx, *args):
 
     else:
         await insufficient_perms(ctx)
+
+@client.command(pass_context = True)
+async def clearchat(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    if check_perms(ctx):
+        amount = 100
+        try:
+            amount = int(args[0])
+        except:
+            None
+
+        await ctx.channel.purge(limit = amount)
 
 # ---------------------------------------------------------------------------------------
 
