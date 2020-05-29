@@ -7,14 +7,21 @@ import sys
 sys.path.append('source/data')
 from dictionaries import channels
 from dictionaries import start_role_messages
+from dictionaries import game_messages
 from enums import Game_Phase
 
 sys.path.append('source/utility')
 from misc import get_dm_channel
+from misc import get_participant_role
+from misc import get_dead_role
 import confirmations
 
 game_phase = Game_Phase.Null
 day_number = 0
+end_setup = True
+
+participant_role = None
+dead_role = None
 
 # Sets up the game and starts it
 async def on_start(user, fallback_channel):
@@ -62,18 +69,72 @@ async def continue_start(channel):
     await asyncio.sleep(0.5)
     try:
         async with channel.typing():
+            # Send start message
+            meeting_hall = channels["meeting"]
+            await meeting_hall.send(game_messages["start"])
+
             # DM players
             await dm_roles()
             await channel.send("Humans, monkeys, and the crow have been sent their roles.")
+
+            # Close channels
+            everyone = channels["meeting"].guild.default_role
+            await channels["meeting"].set_permissions(everyone, read_messages = True, send_messages = False)
+            await channels["wolves"].set_permissions(everyone, read_messages = False, send_messages = False)
+            await channels["snake"].set_permissions(everyone, read_messages = False, send_messages = False)
+            await channels["spider"].set_permissions(everyone, read_messages = False, send_messages = False)
 
             # Setup channels
             await asyncio.sleep(0.5)
             await setup_channels_perms(channel)
 
+            # Give players role
+            global participant_role, dead_role
+            participant_role = await get_participant_role()
+            dead_role = await get_dead_role()
+            for player in players.Player_Manager.players:
+                await player.user.add_roles(participant_role)
+                await asyncio.sleep(0.1)
+
+
+            await channel.send("The first morning will start in 5 minutes.\nUse the `$next` command to skip the timer and start the first morning.")
+
+        # Timer
+        global end_setup
+        end_setup = False
+        timer = 0
+        max_timer = 5 * 60
+        while not end_setup:
+            await asyncio.sleep(1)
+            timer += 1
+            if timer >= max_timer:
+                end_setup = True
+        await channel.send("**GAME IS STARTING**")
+        await asyncio.sleep(2)
+
+        # TODO - force exit game using reset command
+        # Run game
+        while True:
+            await morning()
+            await asyncio.sleep(1)
+            # Check win condition
+
+            await day()
+            await asyncio.sleep(1)
+            # Check win condition
+
+            await evening()
+            await asyncio.sleep(1)
+
+            await night()
+            await asyncio.sleep(1)
+
+        # End game
+
     # Error
     except Exception as inst:
         await on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}.".format(inst))
+        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "There was an error in the game:\n{}.\n\nThe game has been forcefully reset.".format(inst))
         await channel.send(embed = embed)
 
 async def dm_roles():
@@ -136,6 +197,39 @@ async def setup_channels_perms(channel):
     await asyncio.sleep(0.5)
     await channel.send("Spider has been setup.")
 
+# ---------------------------------------------------------------------------------
+
+async def morning():
+    await asyncio.sleep(0.5)
+    global day_number
+    day_number += 1
+
+    meeting_hall = channels["meeting"]
+    global participant_role
+    # First monrning
+    if day_number == 1:
+        await meeting_hall.send(game_messages["first_morning"].format(participant_role.mention, len(players.Player_Manager.wolves)))
+
+    # Other mornings
+    else:
+        await meeting_hall.send(game_messages["morning_no_dead"].format(participant_role.mention))
+
+    # Open meeting hall
+    for player in players.Player_Manager.players:
+        await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = True)
+        # Open voice chat
+
+async def day():
+    await asyncio.sleep(1000)
+
+async def evening():
+    None
+
+async def night():
+    None
+
+# ---------------------------------------------------------------------------------
+
 # Called by the reset command
 async def reset_game(ctx):
     await on_reset()
@@ -143,12 +237,17 @@ async def reset_game(ctx):
 
 # Resets the game; called whenever a reset is needed
 async def on_reset():
-    global game_phase, day_number
+    global game_phase, day_number, end_setup, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
+    end_setup = True
+
+    participant_role = None
+    dead_role = None
 
     # Remove players from channels
     try:
+        await channels["meeting"].edit(sync_permissions = True)
         await channels["wolves"].edit(sync_permissions = True)
         await channels["snake"].edit(sync_permissions = True)
         await channels["spider"].edit(sync_permissions = True)

@@ -76,6 +76,7 @@ class Player(object):
 
 # Class that stores players
 class Player_Manager(object):
+    players_all = []
     players = []
 
     # Humans
@@ -110,6 +111,7 @@ class Player_Manager(object):
                     return False
 
         cls.players.append(player)
+        cls.players_all.append(player)
         return True
 
     @classmethod
@@ -122,10 +124,14 @@ class Player_Manager(object):
             for user_mentioned in mentions:
                 if user.id == user_mentioned.id:
                     cls.players.remove(user)
+                    try:
+                        cls.players_all.remove(user)
+                    except:
+                        print("Error removing player from players_all")
+
                     mentions.remove(user_mentioned)
                     count += 1
         return "{} players have been removed from the game. There are now {} players in the game".format(count, len(cls.players))
-
 
     @classmethod
     def clear_players(cls):
@@ -134,6 +140,7 @@ class Player_Manager(object):
 
         amount = len(cls.players)
         cls.players = []
+        cls.players_all = []
         return "All {} players have been removed.".format(amount)
 
     # -------------------------------------------
@@ -223,6 +230,10 @@ class Player_Manager(object):
     # Other
     @classmethod
     def reset(cls):
+        cls.players = []
+        for player in cls.players_all:
+            cls.players.append(player)
+
         # Humans
         cls.humans_all = []
         cls.humans = []

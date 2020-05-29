@@ -24,6 +24,8 @@ channels = {
     "voice_wolves" : None
 }
 
+# ---------------------------------------------------------------------------------------------------------------------------------------------
+
 # Messages
 start_role_messages = {
     "human" : "*Daylight streams into your window. You wake up and check your stomach, only to find nothing on it. You are a Human.*",
@@ -55,7 +57,7 @@ This worthy brok youre knyght be, and it is oure helpen unto ye.\n\
 Herke this, ye shul drawe blood of a man by euery nyght or ye your self wolde deye.\n\
 It may non otherwise betide.\"\n\n\
 \
-*You are the wolves. You must eliminate all of the humans but one to emerge victorious. Starting from the second day onward, one of the humans **MIGHT** become your ally: the badger. However, their identity will remain a mystery to you, and yours to them. You must not speak of the existence of the badger to anyone.*\n\
+*You are the wolves. You must eliminate all of the humans but one to emerge victorious. Starting from the second day onward, one of the humans **MIGHT** become your ally: the badger. However, their identity will remain a mystery to you.*\n\
 *You may only speak here and in your secret voice channel during the **NIGHT PHASE**. Speaking any other time will result in you being taken by the corruption and yeeted the fuck off the peak of the Mountain. You must wait to speak until you are given the signal.*",
 
     # ---
@@ -75,5 +77,16 @@ Do ye understonde?\"\n\n\
 \
 You have been declared the badger: the one who shall bring about the end of you and your fellow humans so the wolves may emerge victorious. Your victory condition has been changed so that you win if the wolves emerge victorious, rather than the humans. Even if the humans emerge victorious, you will have lost alongside the wolves. The wolves are: {}."
 }
+
+# ----------------------------------------
+
+game_messages = {
+    "start" : "*It appears to be just another day in Yasumizu. However, panic erupts amongst you once you see mist begin to emerge, memories and ancient legends running through your mind as dread takes its cold grasp around you. You race for your homes, determined to shelter, cleanse, and sleep, as per the traditions. You make it back to your home, wash yourself off, and fall asleep.*",
+    "first_morning" : "{}\n\n*Morning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed -- minus the town square, where you find several mangled corpses. Furthermore, you find **{}** marks of the Yomotsu Ookami on a rock. While their nature does not remain entirely clear, the message is: the feast has begun. With no other choice, you all head into the meeting hall to begin the Feast of the Yomi-Purge.*\n\n**The meeting hall is now open.**",
+    "morning_death" : "{}\n\nMorning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed -- minus the town square, where you find the mangled body of {}. They were mauled by the wolves over the night.\n\n**The meeting hall is now open.**",
+    "morning_no_death" : "{}\n\nMorning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed.\n\n**The meeting hall is now open.**",
+}
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO - emoji_to_number and number_to_emoji dictionaries for mass player selection

@@ -85,6 +85,7 @@ async def help(ctx):
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
             description = "\n\n" + "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
+            description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
             description += "\n" + "`$reset` - Forcefully ends and resets the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
@@ -475,7 +476,7 @@ async def start(ctx):
         await ctx.send(embed = embed)
         return
     # TODO - Can't start if game is in progress
-    if False:
+    if gameplay.game_phase > Game_Phase.Null:
         embed = discord.Embed(color = 0xff0000, title = "Game in Progress", description = "The game is already in progress!")
         await ctx.send(embed = embed)
         return
@@ -542,6 +543,34 @@ async def start(ctx):
 @client.command(pass_context = True, aliases = ["reset"])
 async def resetgame(ctx):
     await gameplay.reset_game(ctx)
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True, aliases = ["skip"])
+async def next(ctx):
+    await asyncio.sleep(0.1)
+    # Skip Starting phase
+    if gameplay.game_phase == Game_Phase.Starting and not gameplay.end_setup:
+        await ctx.send("Skipping pre-game timer...")
+        await asyncio.sleep(1)
+        gameplay.end_setup = True
+
+    # Skip Day phase
+    elif gameplay.game_phase == Game_Phase.Day:
+        None
+
+    # Skip Evening phase
+    elif gameplay.game_phase == Game_Phase.Evening:
+        None
+
+    # Skip Night phase
+    elif gameplay.game_phase == Game_Phase.Night:
+        None
+
+    # Cannot skip
+    else:
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Skip", description = "Cannot skip the current phase, or the game is not in progress.")
+        await ctx.send(embed = embed)
 
 # ---------------------------------------------------------------------------------------
 
@@ -632,11 +661,15 @@ async def on_reaction_add(reaction, user):
 
 # ---------------------------------------------------------------------------------------
 
+import misc
+
 @client.command(pass_context = True)
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    await ctx.send(players.Player_Manager.snake.name)
+    #id = discord.utils.get(ctx.guild.roles, name="Gamemasters")
+    role = await misc.get_participant_role()
+    await ctx.author.add_roles(role)
 
 # ---------------------------------------------------------------------------------------
 

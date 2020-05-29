@@ -4,6 +4,9 @@ import sys
 sys.path.append('source/data')
 from enums import Perm_Level
 
+sys.path.append('source')
+import players
+
 def check_perms(ctx, level = Perm_Level.Admin):
     # Admin level
     if level == Perm_Level.Admin:
