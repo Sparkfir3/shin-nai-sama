@@ -542,35 +542,51 @@ async def start(ctx):
 
 @client.command(pass_context = True, aliases = ["reset"])
 async def resetgame(ctx):
-    await gameplay.reset_game(ctx)
+    await asyncio.sleep(0.1)
+
+    # Check permission
+    if check_perms(ctx):
+        gameplay.run_game = False
+        await gameplay.reset_game(ctx)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
 @client.command(pass_context = True, aliases = ["skip"])
 async def next(ctx):
     await asyncio.sleep(0.1)
-    # Skip Starting phase
-    if gameplay.game_phase == Game_Phase.Starting and not gameplay.end_setup:
-        await ctx.send("Skipping pre-game timer...")
-        await asyncio.sleep(1)
-        gameplay.end_setup = True
 
-    # Skip Day phase
-    elif gameplay.game_phase == Game_Phase.Day:
-        None
+    # Check permission
+    if check_perms(ctx):
+        # Skip Starting phase
+        if gameplay.game_phase == Game_Phase.Starting and not gameplay.end_setup:
+            await ctx.send("Skipping pre-game timer...")
+            await asyncio.sleep(1)
+            gameplay.end_setup = True
 
-    # Skip Evening phase
-    elif gameplay.game_phase == Game_Phase.Evening:
-        None
+        # Skip Day phase
+        elif gameplay.game_phase == Game_Phase.Day:
+            None
 
-    # Skip Night phase
-    elif gameplay.game_phase == Game_Phase.Night:
-        None
+        # Skip Evening phase
+        elif gameplay.game_phase == Game_Phase.Evening:
+            None
 
-    # Cannot skip
+        # Skip Night phase
+        elif gameplay.game_phase == Game_Phase.Night:
+            None
+
+        # Cannot skip
+        else:
+            embed = discord.Embed(color = 0xff0000, title = "Cannot Skip", description = "Cannot skip the current phase, or the game is not in progress.")
+            await ctx.send(embed = embed)
+
+    # Insufficient permission
     else:
-        embed = discord.Embed(color = 0xff0000, title = "Cannot Skip", description = "Cannot skip the current phase, or the game is not in progress.")
-        await ctx.send(embed = embed)
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 

@@ -19,6 +19,8 @@ import confirmations
 game_phase = Game_Phase.Null
 day_number = 0
 end_setup = True
+run_game = False
+next_phase = False
 
 participant_role = None
 dead_role = None
@@ -114,20 +116,23 @@ async def continue_start(channel):
 
         # TODO - force exit game using reset command
         # Run game
-        while True:
+        global run_game
+        run_game = True
+        while run_game:
             await morning()
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
             # Check win condition
 
             await day()
-            await asyncio.sleep(1)
-            # Check win condition
+            await asyncio.sleep(0.1)
+            # Check win condition after lynching
 
             await evening()
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
+            # Check win condition
 
             await night()
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
 
         # End game
 
@@ -204,9 +209,11 @@ async def morning():
     global day_number
     day_number += 1
 
+    # Message crow
+
     meeting_hall = channels["meeting"]
     global participant_role
-    # First monrning
+    # First mornning
     if day_number == 1:
         await meeting_hall.send(game_messages["first_morning"].format(participant_role.mention, len(players.Player_Manager.wolves)))
 
@@ -217,13 +224,42 @@ async def morning():
     # Open meeting hall
     for player in players.Player_Manager.players:
         await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = True)
-        # Open voice chat
+        await channels["voice_meeting"].set_permissions(player.user, read_messages = True, send_messages = True)
 
 async def day():
-    await asyncio.sleep(1000)
+    global next_phase
+    next_phase = False
+    timer = 65
+
+    channel = channels["meeting"]
+
+    while not next_phase:
+        await asyncio.sleep(1)
+        timer -= 1
+
+        if timer <= 0:
+            next_phase = True
+
+        elif timer == 600: # 10 Minutes
+            await channel.send("**10 minutes remain in the day.**")
+        elif timer == 300: # 5 Minutes
+            await channel.send("**5 minutes remain in the day.**")
+        elif timer == 60: # 1 Minute
+            await channel.send("**1 minute remains in the day.**")
+        elif timer == 30: # 30 Seconds
+            await channel.send("**30 seconds remain in the day.**")
+        elif timer == 10: # 10 Seconds
+            await channel.send("**10 seconds remain in the day.**")
+        elif timer <= 5: # 5 Second countdown
+            await channel.send("**{} second{} remaining.**".format(timer, "" if timer == 1 else "s"))
+
+    await channel.send(game_messages["day_end"])
 
 async def evening():
-    None
+    # Cannot start lynching during the evening
+    # Get power roles
+
+    await asyncio.sleep(1000)
 
 async def night():
     None
@@ -237,10 +273,12 @@ async def reset_game(ctx):
 
 # Resets the game; called whenever a reset is needed
 async def on_reset():
-    global game_phase, day_number, end_setup, participant_role, dead_role
+    global game_phase, day_number, end_setup, run_game, next_phase, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
     end_setup = True
+    run_game = False
+    next_phase = False
 
     participant_role = None
     dead_role = None
@@ -251,6 +289,8 @@ async def on_reset():
         await channels["wolves"].edit(sync_permissions = True)
         await channels["snake"].edit(sync_permissions = True)
         await channels["spider"].edit(sync_permissions = True)
+        await channels["voice_meeting"].edit(sync_permissions = True)
+        await channels["voice_wolves"].edit(sync_permissions = True)
     except:
         None
 

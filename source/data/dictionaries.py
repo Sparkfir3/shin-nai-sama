@@ -82,9 +82,11 @@ You have been declared the badger: the one who shall bring about the end of you 
 
 game_messages = {
     "start" : "*It appears to be just another day in Yasumizu. However, panic erupts amongst you once you see mist begin to emerge, memories and ancient legends running through your mind as dread takes its cold grasp around you. You race for your homes, determined to shelter, cleanse, and sleep, as per the traditions. You make it back to your home, wash yourself off, and fall asleep.*",
-    "first_morning" : "{}\n\n*Morning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed -- minus the town square, where you find several mangled corpses. Furthermore, you find **{}** marks of the Yomotsu Ookami on a rock. While their nature does not remain entirely clear, the message is: the feast has begun. With no other choice, you all head into the meeting hall to begin the Feast of the Yomi-Purge.*\n\n**The meeting hall is now open.**",
-    "morning_death" : "{}\n\nMorning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed -- minus the town square, where you find the mangled body of {}. They were mauled by the wolves over the night.\n\n**The meeting hall is now open.**",
-    "morning_no_death" : "{}\n\nMorning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed.\n\n**The meeting hall is now open.**",
+    "first_morning" : "{}\n\n*Morning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed -- minus the town square, where you find several mangled corpses. Furthermore, you find **{}** marks of the Yomotsu Ookami on a rock. While their nature does not remain entirely clear, the message is: the feast has begun. With no other choice, you all head into the meeting hall to begin the Feast of the Yomi-Purge.*\n\n**The meeting hall is now open. 10 minutes remain in the day.**",
+    "morning_death" : "{}\n\nMorning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed -- minus the town square, where you find the mangled body of {}. They were mauled by the wolves over the night.\n\n**The meeting hall is now open. 10 minutes remain in the day.**",
+    "morning_no_death" : "{}\n\nMorning has arrived. You emerge from your homes to find the village covered in mist, but otherwise completely unscathed.\n\n**The meeting hall is now open. 10 minutes remain in the day.**",
+    "day_end" : "*The day has ended, and the afternoon has begun.*\n\n**3 minutes remain.**",
+    "evening_end" : ""
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------
