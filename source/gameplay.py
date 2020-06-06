@@ -14,6 +14,7 @@ sys.path.append('source/utility')
 from misc import get_dm_channel
 from misc import get_participant_role
 from misc import get_dead_role
+from misc import ordinalize
 import confirmations
 
 game_phase = Game_Phase.Null
@@ -71,13 +72,6 @@ async def continue_start(channel):
     await asyncio.sleep(0.5)
     try:
         async with channel.typing():
-            # Send start message
-            meeting_hall = channels["meeting"]
-            await meeting_hall.send(game_messages["start"])
-
-            # DM players
-            await dm_roles()
-            await channel.send("Humans, monkeys, and the crow have been sent their roles.")
 
             # Close channels
             everyone = channels["meeting"].guild.default_role
@@ -85,6 +79,16 @@ async def continue_start(channel):
             await channels["wolves"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["snake"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["spider"].set_permissions(everyone, read_messages = False, send_messages = False)
+            await channels["voice_meeting"].set_permissions(everyone, view_channel = False)
+            await channels["voice_wolves"].set_permissions(everyone, view_channel = False)
+
+            # Send start message
+            meeting_hall = channels["meeting"]
+            await meeting_hall.send(game_messages["start"])
+
+            # DM players
+            await dm_roles()
+            await channel.send("Humans, monkeys, and the crow have been sent their roles.")
 
             # Setup channels
             await asyncio.sleep(0.5)
@@ -98,14 +102,13 @@ async def continue_start(channel):
                 await player.user.add_roles(participant_role)
                 await asyncio.sleep(0.1)
 
-
-            await channel.send("The first morning will start in 5 minutes.\nUse the `$next` command to skip the timer and start the first morning.")
+            await channel.send("The first morning will start in 15 minutes.\nUse the `$next` command to skip the timer and start the first morning.")
 
         # Timer
         global end_setup
         end_setup = False
         timer = 0
-        max_timer = 5 * 60
+        max_timer = 15 * 60
         while not end_setup:
             await asyncio.sleep(1)
             timer += 1
@@ -119,20 +122,47 @@ async def continue_start(channel):
         global run_game
         run_game = True
         while run_game:
+            # ---------------------
+
             await morning()
             await asyncio.sleep(0.1)
+
             # Check win condition
+
+            # Check exit game
+            if not run_game:
+                break
+
+            # ---------------------
 
             await day()
             await asyncio.sleep(0.1)
+
             # Check win condition after lynching
+
+            # Check exit game
+            if not run_game:
+                break
+
+            # ---------------------
 
             await evening()
             await asyncio.sleep(0.1)
+
             # Check win condition
+
+            # Check exit game
+            if not run_game:
+                break
+
+            # ---------------------
 
             await night()
             await asyncio.sleep(0.1)
+
+            # Check exit game
+            if not run_game:
+                break
 
         # End game
 
@@ -206,63 +236,133 @@ async def setup_channels_perms(channel):
 
 async def morning():
     await asyncio.sleep(0.5)
-    global day_number
+    global day_number, game_phase
     day_number += 1
+    game_phase = Game_Phase.Morning
 
     # Message crow
 
     meeting_hall = channels["meeting"]
     global participant_role
-    # First mornning
+    # First morning
     if day_number == 1:
         await meeting_hall.send(game_messages["first_morning"].format(participant_role.mention, len(players.Player_Manager.wolves)))
 
     # Other mornings
     else:
-        await meeting_hall.send(game_messages["morning_no_dead"].format(participant_role.mention))
+        await meeting_hall.send(game_messages["morning_no_death"].format(participant_role.mention, ordinalize(day_number)))
 
     # Open meeting hall
     for player in players.Player_Manager.players:
         await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = True)
-        await channels["voice_meeting"].set_permissions(player.user, read_messages = True, send_messages = True)
+        await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True)
 
 async def day():
-    global next_phase
+    global next_phase, game_phase
     next_phase = False
-    timer = 65
+    game_phase = Game_Phase.Day
 
+    timer = 10 * 60
     channel = channels["meeting"]
 
+    # Meeting hall is opened during the morning
+
+    # Timer
     while not next_phase:
         await asyncio.sleep(1)
         timer -= 1
 
-        if timer <= 0:
+        if timer <= 0 or next_phase:
             next_phase = True
 
-        elif timer == 600: # 10 Minutes
-            await channel.send("**10 minutes remain in the day.**")
-        elif timer == 300: # 5 Minutes
-            await channel.send("**5 minutes remain in the day.**")
-        elif timer == 60: # 1 Minute
-            await channel.send("**1 minute remains in the day.**")
-        elif timer == 30: # 30 Seconds
-            await channel.send("**30 seconds remain in the day.**")
-        elif timer == 10: # 10 Seconds
-            await channel.send("**10 seconds remain in the day.**")
-        elif timer <= 5: # 5 Second countdown
-            await channel.send("**{} second{} remaining.**".format(timer, "" if timer == 1 else "s"))
+        else:
+            await timer_warning(channel, timer)
 
     await channel.send(game_messages["day_end"])
 
 async def evening():
-    # Cannot start lynching during the evening
-    # Get power roles
+    global next_phase, game_phase
+    next_phase = False
+    game_phase = Game_Phase.Evening
+    
+    timer = 3 * 60
+    channel = channels["meeting"]
 
-    await asyncio.sleep(1000)
+    # Open channels
+    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = True)
+    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = True)
+
+    # Timer
+    while not next_phase:
+        await asyncio.sleep(1)
+        timer -= 1
+
+        if timer <= 0 or next_phase:
+            next_phase = True
+
+        else:
+            await timer_warning(channel, timer, phase = "afternoon")
+
+    await channel.send(game_messages["evening_end"])
+
+    # Close channels
+    for player in players.Player_Manager.players:
+        await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
+        await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = False)
+
+    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
+    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
 
 async def night():
-    None
+    global next_phase, game_phase
+    next_phase = False
+    game_phase = Game_Phase.Night
+
+    timer = 3 * 60
+    channel = channels["wolves"]
+
+    # Open channels
+    mention_wolves = ""
+    for wolf in players.Player_Manager.wolves:
+        await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = True)
+        await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = True)
+        mention_wolves += "{} ".format(wolf.user.mention)
+        await asyncio.sleep(0.5)
+
+    await channels["wolves"].send(game_messages["night_start"].format(mention_wolves.strip()))
+
+    # Timer
+    while not next_phase:
+        await asyncio.sleep(1)
+        timer -= 1
+
+        if timer <= 0 or next_phase:
+            next_phase = True
+
+        else:
+            await timer_warning(channel, timer, phase = "night")
+
+    await channel.send(game_messages["night_end"])
+
+    # Close channels
+    for wolf in players.Player_Manager.wolves:
+        await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
+        await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = False)
+        await asyncio.sleep(0.5)
+
+async def timer_warning(channel, timer, phase = "day"):
+    if timer == 600: # 10 Minutes
+        await channel.send("**10 minutes remain in the {}.**".format(phase))
+    elif timer == 300: # 5 Minutes
+        await channel.send("**5 minutes remain in the {}.**".format(phase))
+    elif timer == 60: # 1 Minute
+        await channel.send("**1 minute remains in the {}.**".format(phase))
+    elif timer == 30: # 30 Seconds
+        await channel.send("**30 seconds remain in the {}.**".format(phase))
+    elif timer == 10: # 10 Seconds
+        await channel.send("**10 seconds remain in the {}.**".format(phase))
+    elif timer <= 5: # 5 Second countdown
+        await channel.send("**{} second{} remaining.**".format(timer, "" if timer == 1 else "s"))
 
 # ---------------------------------------------------------------------------------
 
@@ -278,7 +378,7 @@ async def on_reset():
     day_number = 0
     end_setup = True
     run_game = False
-    next_phase = False
+    next_phase = True
 
     participant_role = None
     dead_role = None

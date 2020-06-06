@@ -25,3 +25,13 @@ async def get_dead_role():
         return await guild.create_role(name = "Dead")
     else:
         return role
+
+def ordinalize(number):
+    if number % 10 == 1:
+        return "{}st".format(number)
+    elif number % 10 == 2:
+        return "{}nd".format(number)
+    elif number % 10 == 3:
+        return "{}rd".format(number)
+    else:
+        return "{}th".format(number)

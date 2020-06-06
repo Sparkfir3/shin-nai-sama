@@ -110,16 +110,28 @@ async def gettingstarted(ctx):
 
     if check_perms(ctx):
         description = "To start, you first must set up the channels for the game. See `$help channels` for more information."
-        description = "To check if the channels have already been setup, use the `$listchannels` command."
+        description += "To check if the channels have already been setup, use the `$listchannels` command."
 
         description += "\n\nTo add players to the game, use the `$add` command, followed by mentions of the players you wish to add."
         description += "\n\nOnce all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles."
-        description += "\nWARNING - as of right now, the bot has no further functions that will automatically run the game."
-
-        description += "\n\nAdditionally, there is a `$poll` command that players can use to start polls."
-        description += "\nThere's also a `$timer` command for moderators to use to create manual timers if needed."
-
         embed = discord.Embed(color = 0x555555, title = "Getting Started with Shin'nai-sama", description = description)
+
+        # -----
+
+        description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels."
+        description += "\nYou can use the `$next` command to manually skip a phase, if you wish."
+        description += "\nThe `$resetgame` command will forcefully quit the game."
+        description += "\n\n**WARNING** - the game does not currently deal with dead players, meaning you must manually add players to dead chats."
+        description += "\nAll players are treated as alive, meaning dead players are also allowed to speak in channels (it sets this automatically), and you must manually moderate them to make sure they're behaving."
+        description += "\nAlso players are not kicked from voice channels when a phase ends."
+        embed.add_field(name = "Running the Game", value = description, inline = False)
+
+        # -----
+
+        description = "Additionally, there is a `$poll` command that players can use to start polls."
+        description += "\nThere's also a `$timer` command for moderators to use to create manual timers if needed."
+        embed.add_field(name = "Miscallaneous", value = description, inline = False)
+
         await ctx.send(embed = embed)
 
     else:
@@ -567,17 +579,10 @@ async def next(ctx):
             await asyncio.sleep(1)
             gameplay.end_setup = True
 
-        # Skip Day phase
-        elif gameplay.game_phase == Game_Phase.Day:
-            None
-
-        # Skip Evening phase
-        elif gameplay.game_phase == Game_Phase.Evening:
-            None
-
-        # Skip Night phase
-        elif gameplay.game_phase == Game_Phase.Night:
-            None
+        # Skip Day, Evening, or Night phase
+        elif gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+            await ctx.send("Skipping phase...")
+            gameplay.next_phase = True
 
         # Cannot skip
         else:
@@ -683,9 +688,7 @@ import misc
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    #id = discord.utils.get(ctx.guild.roles, name="Gamemasters")
-    role = await misc.get_participant_role()
-    await ctx.author.add_roles(role)
+    await ctx.send("{}".format(int(gameplay.game_phase)))
 
 # ---------------------------------------------------------------------------------------
 
