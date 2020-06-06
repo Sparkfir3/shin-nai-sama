@@ -84,17 +84,22 @@ async def help(ctx):
             description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "\n\n" + "`$start` - Starts the game. WARNING - NOT FULLY FUNCTIONAL"
-            embed.add_field(name = "Game Start", value = description, inline = False)
+            description = "\n\n" + "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
+            description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
+            description += "\n" + "`$reset` - Forcefully ends and resets the game."
+            embed.add_field(name = "Game Management", value = description, inline = False)
 
             description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
+            description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100. **WARNING - THIS ACTION CANNOT BE CANCELLED.**"
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
             await ctx.send(embed = embed)
 
-        # Dev commands
+            # Dev commands
             if ctx.author.id == 221115928933302272:
                 description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
+                description += "\n" + "`$allowdupes` - Toggles whether or not duplicate players are allowed."
+                description += "\n" + "`$quickstart` - Quickly sets up the game for testing."
 
                 embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Dev Commands", description = description)
                 await ctx.send(embed = embed)
@@ -105,16 +110,28 @@ async def gettingstarted(ctx):
 
     if check_perms(ctx):
         description = "To start, you first must set up the channels for the game. See `$help channels` for more information."
-        description = "To check if the channels have already been setup, use the `$listchannels` command."
+        description += "To check if the channels have already been setup, use the `$listchannels` command."
 
         description += "\n\nTo add players to the game, use the `$add` command, followed by mentions of the players you wish to add."
         description += "\n\nOnce all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles."
-        description += "\nWARNING - as of right now, the bot has no further functions that will automatically run the game."
-
-        description += "\n\nAdditionally, there is a `$poll` command that players can use to start polls."
-        description += "\nThere's also a `$timer` command for moderators to use to create manual timers if needed."
-
         embed = discord.Embed(color = 0x555555, title = "Getting Started with Shin'nai-sama", description = description)
+
+        # -----
+
+        description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels."
+        description += "\nYou can use the `$next` command to manually skip a phase, if you wish."
+        description += "\nThe `$resetgame` command will forcefully quit the game."
+        description += "\n\n**WARNING** - the game does not currently deal with dead players, meaning you must manually add players to dead chats."
+        description += "\nAll players are treated as alive, meaning dead players are also allowed to speak in channels (it sets this automatically), and you must manually moderate them to make sure they're behaving."
+        description += "\nAlso players are not kicked from voice channels when a phase ends."
+        embed.add_field(name = "Running the Game", value = description, inline = False)
+
+        # -----
+
+        description = "Additionally, there is a `$poll` command that players can use to start polls."
+        description += "\nThere's also a `$timer` command for moderators to use to create manual timers if needed."
+        embed.add_field(name = "Miscallaneous", value = description, inline = False)
+
         await ctx.send(embed = embed)
 
     else:
@@ -124,6 +141,51 @@ async def gettingstarted(ctx):
 async def ping(ctx):
     await asyncio.sleep(0.1)
     await ctx.send("🏓 Pong! Latency: {} ms".format(round(client.latency, 1)))
+
+# ---------------------------------------------------------------------------------------
+
+# Dev commands
+allow_duplicate_players = False
+@client.command(pass_context = True, aliases = ["allowdupes"])
+async def allowduplicates(ctx):
+    await asyncio.sleep(0.1)
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
+        global allow_duplicate_players
+        allow_duplicate_players = not allow_duplicate_players
+        await ctx.send("Duplicate players have been {}.".format("enabled" if allow_duplicate_players else "disabled"))
+
+bypass_player_limit = False
+@client.command(pass_context = True)
+async def bypasslimit(ctx):
+    await asyncio.sleep(0.1)
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
+        global bypass_player_limit
+        bypass_player_limit = not bypass_player_limit
+        await ctx.send("Player limit has been {}.".format("disabled" if bypass_player_limit else "enabled"))
+
+@client.command(pass_context = True)
+async def quickstart(ctx):
+    await asyncio.sleep(0.1)
+    # Only Sparkfire can use this command
+    if check_perms(ctx) and ctx.author.id == 221115928933302272:
+        global bypass_player_limit
+        bypass_player_limit = True
+        global allow_duplicate_players
+        allow_duplicate_players = True
+        
+        async with ctx.channel.typing():
+            await loadchannels(ctx)
+            await asyncio.sleep(0.1)
+            if len(ctx.message.mentions) > 0:
+                await asyncio.sleep(0.1)
+                for i in range(10):
+                    await addplayer(ctx)
+
+            await asyncio.sleep(0.5)
+
+        await start(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -323,12 +385,13 @@ async def addplayer(ctx):
     if check_perms(ctx):
         # Add player(s)
         names_str = ""
+        global allow_duplicate_players
         for i, user in enumerate(ctx.message.mentions):
             # Convert mentioned player into player class
             new_player = players.Player(user, Player_Types.Human)
 
             # Attempt to add player
-            if players.Player_Manager.add_player(new_player):
+            if players.Player_Manager.add_player(new_player, allow_dupes = allow_duplicate_players):
                 # Format name for output string
                 names_str += "`{}`".format(new_player.name)
                 if len(ctx.message.mentions) > 1 and i == len(ctx.message.mentions) - 2:
@@ -414,10 +477,6 @@ async def listplayers(ctx, *args):
 # ---------------------------------------------------------------------------------------
 
 # Start game
-bypass_player_limit = True
-
-# -------------------
-
 @client.command(pass_context = True)
 async def start(ctx):
     await asyncio.sleep(0.1)
@@ -429,7 +488,7 @@ async def start(ctx):
         await ctx.send(embed = embed)
         return
     # TODO - Can't start if game is in progress
-    if False:
+    if gameplay.game_phase > Game_Phase.Null:
         embed = discord.Embed(color = 0xff0000, title = "Game in Progress", description = "The game is already in progress!")
         await ctx.send(embed = embed)
         return
@@ -463,17 +522,6 @@ async def start(ctx):
     else:
         await insufficient_perms(ctx)
 
-# ---------------
-
-@client.command(pass_context = True)
-async def bypasslimit(ctx):
-    await asyncio.sleep(0.1)
-    # Only Sparkfire can use this command
-    if check_perms(ctx) and ctx.author.id == 221115928933302272:
-        global bypass_player_limit
-        bypass_player_limit = not bypass_player_limit
-        await ctx.send("Player limit has been {}.".format("disabled" if bypass_player_limit else "enabled"))
-
 # ---------------------------------------------------------------------------------------
 
 # TODO - morning
@@ -501,6 +549,49 @@ async def bypasslimit(ctx):
 # ---------------------------------------------------------------------------------------
 
 # TODO - end game
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True, aliases = ["reset"])
+async def resetgame(ctx):
+    await asyncio.sleep(0.1)
+
+    # Check permission
+    if check_perms(ctx):
+        gameplay.run_game = False
+        await gameplay.reset_game(ctx)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True, aliases = ["skip"])
+async def next(ctx):
+    await asyncio.sleep(0.1)
+
+    # Check permission
+    if check_perms(ctx):
+        # Skip Starting phase
+        if gameplay.game_phase == Game_Phase.Starting and not gameplay.end_setup:
+            await ctx.send("Skipping pre-game timer...")
+            await asyncio.sleep(1)
+            gameplay.end_setup = True
+
+        # Skip Day, Evening, or Night phase
+        elif gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+            await ctx.send("Skipping phase...")
+            gameplay.next_phase = True
+
+        # Cannot skip
+        else:
+            embed = discord.Embed(color = 0xff0000, title = "Cannot Skip", description = "Cannot skip the current phase, or the game is not in progress.")
+            await ctx.send(embed = embed)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -539,6 +630,19 @@ async def timer(ctx, *args):
     else:
         await insufficient_perms(ctx)
 
+@client.command(pass_context = True)
+async def clearchat(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    if check_perms(ctx):
+        amount = 100
+        try:
+            amount = int(args[0])
+        except:
+            None
+
+        await ctx.channel.purge(limit = amount)
+
 # ---------------------------------------------------------------------------------------
 
 @client.event
@@ -563,16 +667,28 @@ async def on_reaction_add(reaction, user):
             await channel.send(embed = embed)
         return
 
+    # Role distribution confirmation
+    if confirm_message["roles"] != None and reaction.message.id == confirm_message["roles"].id and confirm_user["roles"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["roles"] = None
+            await gameplay.continue_start(reaction.message.channel)
+
+        elif reaction.emoji == '❌':
+            confirm_message["roles"] = None
+            await gameplay.on_reset()
+            embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+            await channel.send(embed = embed)
+        return
+
 # ---------------------------------------------------------------------------------------
+
+import misc
 
 @client.command(pass_context = True)
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    channel = ctx.author.dm_channel
-    if channel == None:
-        channel = await ctx.author.create_dm()
-    await channel.send("test")
+    await ctx.send("{}".format(int(gameplay.game_phase)))
 
 # ---------------------------------------------------------------------------------------
 
