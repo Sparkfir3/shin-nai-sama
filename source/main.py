@@ -120,16 +120,16 @@ async def gettingstarted(ctx):
 
         description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels."
         description += "\nYou can use the `$next` command to manually skip a phase, if you wish."
-        description += "\nThe `$resetgame` command will forcefully quit the game."
+        description += "\nThe `$reset` command will forcefully quit the game."
         description += "\n\n**WARNING** - the game does not currently deal with dead players, meaning you must manually add players to dead chats."
         description += "\nAll players are treated as alive, meaning dead players are also allowed to speak in channels (it sets this automatically), and you must manually moderate them to make sure they're behaving."
-        description += "\nAlso players are not kicked from voice channels when a phase ends."
+        description += "\nPlayers are not kicked from voice channels when a phase ends. There is no way to pause or extend a phase's timer."
         embed.add_field(name = "Running the Game", value = description, inline = False)
 
         # -----
 
         description = "Additionally, there is a `$poll` command that players can use to start polls."
-        description += "\nThere's also a `$timer` command for moderators to use to create manual timers if needed."
+        description += "\nThere is also a `$timer` command for moderators to use to create manual timers if needed."
         embed.add_field(name = "Miscallaneous", value = description, inline = False)
 
         await ctx.send(embed = embed)

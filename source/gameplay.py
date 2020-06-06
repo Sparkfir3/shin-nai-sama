@@ -85,6 +85,7 @@ async def continue_start(channel):
             # Send start message
             meeting_hall = channels["meeting"]
             await meeting_hall.send(game_messages["start"])
+            await asyncio.sleep(1)
 
             # DM players
             await dm_roles()
@@ -240,7 +241,7 @@ async def morning():
     day_number += 1
     game_phase = Game_Phase.Morning
 
-    # Message crow
+    # TODO - Message crow
 
     meeting_hall = channels["meeting"]
     global participant_role
@@ -262,7 +263,7 @@ async def day():
     next_phase = False
     game_phase = Game_Phase.Day
 
-    timer = 10 * 60
+    timer = 30 * 60
     channel = channels["meeting"]
 
     # Meeting hall is opened during the morning
@@ -272,7 +273,7 @@ async def day():
         await asyncio.sleep(1)
         timer -= 1
 
-        if timer <= 0 or next_phase:
+        if timer <= 0:
             next_phase = True
 
         else:
@@ -297,7 +298,7 @@ async def evening():
         await asyncio.sleep(1)
         timer -= 1
 
-        if timer <= 0 or next_phase:
+        if timer <= 0:
             next_phase = True
 
         else:
@@ -331,12 +332,19 @@ async def night():
 
     await channels["wolves"].send(game_messages["night_start"].format(mention_wolves.strip()))
 
+    # Message badger on night 1
+    global day_number
+    if day_number == 1 and players.Player_Manager.badger_alive:
+        dm = await get_dm_channel(players.Player_Manager.badger.user)
+        await dm.send(start_role_messages["badger"].format(mention_wolves.strip()))
+        await asyncio.sleep(0.1)
+
     # Timer
     while not next_phase:
         await asyncio.sleep(1)
         timer -= 1
 
-        if timer <= 0 or next_phase:
+        if timer <= 0:
             next_phase = True
 
         else:
@@ -363,6 +371,12 @@ async def timer_warning(channel, timer, phase = "day"):
         await channel.send("**10 seconds remain in the {}.**".format(phase))
     elif timer <= 5: # 5 Second countdown
         await channel.send("**{} second{} remaining.**".format(timer, "" if timer == 1 else "s"))
+
+# ---------------------------------------------------------------------------------
+
+# TODO
+async def pause_game():
+    None
 
 # ---------------------------------------------------------------------------------
 

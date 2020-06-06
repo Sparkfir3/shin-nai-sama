@@ -27,11 +27,11 @@ async def get_dead_role():
         return role
 
 def ordinalize(number):
-    if number % 10 == 1:
+    if number % 10 == 1 and number != 11:
         return "{}st".format(number)
-    elif number % 10 == 2:
+    elif number % 10 == 2 and number != 12:
         return "{}nd".format(number)
-    elif number % 10 == 3:
+    elif number % 10 == 3 and number != 13:
         return "{}rd".format(number)
     else:
         return "{}th".format(number)
