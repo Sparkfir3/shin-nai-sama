@@ -60,11 +60,14 @@ async def help(ctx):
 
     if ctx.invoked_subcommand is None:
         # Regular commands
-        description = "`$help` - Lists all available bot comamnds."
-        description += "\n" + "`$poll` - Starts a poll with the given text."
-        description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
-
+        description = "\n" + "`$poll` - Starts a poll with the given text."
+        description += "\n" + "`$listplayers` - Lists all players currently in the game."
         embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Commands", description = description)
+
+        description = "\n" + "`$help` - Lists all available bot comamnds."
+        description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
+        embed.add_field(name = "Miscellaneous", value = description, inline = False)
+
         await ctx.send(embed = embed)
 
         # Moderator commands
@@ -146,7 +149,7 @@ async def ping(ctx):
 
 # Dev commands
 allow_duplicate_players = False
-@client.command(pass_context = True, aliases = ["allowdupes"])
+@client.command(pass_context = True, aliases = ["allowdupes", "enabledupes"])
 async def allowduplicates(ctx):
     await asyncio.sleep(0.1)
     # Only Sparkfire can use this command
