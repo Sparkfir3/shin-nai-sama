@@ -89,7 +89,8 @@ async def help(ctx):
 
             description = "\n\n" + "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
             description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
-            description += "\n" + "`$reset` - Forcefully ends and resets the game."
+            description += "\n" + "`$end` - Forcefully ends the game. Players remain in the game, with their roles."
+            description += "\n" + "`$reset` - Forcefully ends and resets the game. Removes all players from the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
             description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
@@ -562,7 +563,20 @@ async def resetgame(ctx):
     # Check permission
     if check_perms(ctx):
         gameplay.run_game = False
-        await gameplay.reset_game(ctx)
+        await gameplay.reset_game(ctx, reset_players = True)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
+
+@client.command(pass_context = True, aliases = ["end"])
+async def endgame(ctx):
+    await asyncio.sleep(0.1)
+
+    # Check permission
+    if check_perms(ctx):
+        gameplay.run_game = False
+        await gameplay.reset_game(ctx, reset_players = False)
 
     # Insufficient permission
     else:
@@ -684,8 +698,6 @@ async def on_reaction_add(reaction, user):
         return
 
 # ---------------------------------------------------------------------------------------
-
-import misc
 
 @client.command(pass_context = True)
 async def test(ctx):

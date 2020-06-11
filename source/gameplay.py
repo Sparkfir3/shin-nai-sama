@@ -73,12 +73,19 @@ async def continue_start(channel):
     try:
         async with channel.typing():
 
-            # Close channels
+            # Enable permissions for channel category
             everyone = channels["meeting"].guild.default_role
+            try:
+                await channels["meeting"].category.set_permissions(everyone, read_message_history = True, read_messages = True, send_messages = True)
+            except:
+                None
+
+            # Close channels
             await channels["meeting"].set_permissions(everyone, read_messages = True, send_messages = False)
             await channels["wolves"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["snake"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["spider"].set_permissions(everyone, read_messages = False, send_messages = False)
+            await channels["dead"].set_permissions(everyone, view_channel = False, read_messages = True, send_messages = True)
             await channels["voice_meeting"].set_permissions(everyone, view_channel = False)
             await channels["voice_wolves"].set_permissions(everyone, view_channel = False)
 
@@ -293,6 +300,8 @@ async def evening():
     await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = True)
     await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = True)
 
+    # TODO - message snake and spider channels to have them do their thing
+
     # Timer
     while not next_phase:
         await asyncio.sleep(1)
@@ -381,12 +390,12 @@ async def pause_game():
 # ---------------------------------------------------------------------------------
 
 # Called by the reset command
-async def reset_game(ctx):
-    await on_reset()
+async def reset_game(ctx, reset_players = False):
+    await on_reset(reset_players = reset_players)
     await ctx.send("Game has been reset.")
 
 # Resets the game; called whenever a reset is needed
-async def on_reset():
+async def on_reset(reset_players = False):
     global game_phase, day_number, end_setup, run_game, next_phase, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
@@ -403,9 +412,15 @@ async def on_reset():
         await channels["wolves"].edit(sync_permissions = True)
         await channels["snake"].edit(sync_permissions = True)
         await channels["spider"].edit(sync_permissions = True)
+        await channels["dead"].edit(sync_permissions = True)
         await channels["voice_meeting"].edit(sync_permissions = True)
         await channels["voice_wolves"].edit(sync_permissions = True)
     except:
         None
 
+    # Reset player list
+    if reset_players:
+        players.Player_Manager.reset()
+
+async def reset_players():
     players.Player_Manager.reset()
