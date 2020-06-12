@@ -19,6 +19,8 @@ import confirmations
 
 game_phase = Game_Phase.Null
 day_number = 0
+timer = 0
+second_count = 0
 end_setup = True
 run_game = False
 next_phase = False
@@ -266,11 +268,12 @@ async def morning():
         await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True)
 
 async def day():
-    global next_phase, game_phase
+    global next_phase, game_phase, timer, second_count
     next_phase = False
     game_phase = Game_Phase.Day
 
     timer = 30 * 60
+    second_count = 0
     channel = channels["meeting"]
 
     # Meeting hall is opened during the morning
@@ -279,6 +282,7 @@ async def day():
     while not next_phase:
         await asyncio.sleep(1)
         timer -= 1
+        second_count += 1
 
         if timer <= 0:
             next_phase = True
@@ -289,11 +293,12 @@ async def day():
     await channel.send(game_messages["day_end"])
 
 async def evening():
-    global next_phase, game_phase
+    global next_phase, game_phase, timer, second_count
     next_phase = False
     game_phase = Game_Phase.Evening
     
     timer = 3 * 60
+    second_count = 0
     channel = channels["meeting"]
 
     # Open channels
@@ -306,6 +311,7 @@ async def evening():
     while not next_phase:
         await asyncio.sleep(1)
         timer -= 1
+        second_count += 1
 
         if timer <= 0:
             next_phase = True
@@ -324,11 +330,12 @@ async def evening():
     await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
 
 async def night():
-    global next_phase, game_phase
+    global next_phase, game_phase, timer, second_count
     next_phase = False
     game_phase = Game_Phase.Night
 
     timer = 3 * 60
+    second_count = 0
     channel = channels["wolves"]
 
     # Open channels
@@ -352,6 +359,7 @@ async def night():
     while not next_phase:
         await asyncio.sleep(1)
         timer -= 1
+        second_count += 1
 
         if timer <= 0:
             next_phase = True
@@ -396,9 +404,10 @@ async def reset_game(ctx, reset_players = False):
 
 # Resets the game; called whenever a reset is needed
 async def on_reset(reset_players = False):
-    global game_phase, day_number, end_setup, run_game, next_phase, participant_role, dead_role
+    global game_phase, day_number, second_count, end_setup, run_game, next_phase, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
+    second_count = 0
     end_setup = True
     run_game = False
     next_phase = True

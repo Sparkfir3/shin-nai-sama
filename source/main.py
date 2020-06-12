@@ -64,6 +64,9 @@ async def help(ctx):
         description += "\n" + "`$listplayers` - Lists all players currently in the game."
         embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Commands", description = description)
 
+        description = "\n" + "`$time` - Checks the current time remaining in the day."
+        embed.add_field(name = "In-Game Commands", value = description, inline = False)
+
         description = "\n" + "`$help` - Lists all available bot comamnds."
         description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
         embed.add_field(name = "Miscellaneous", value = description, inline = False)
@@ -81,19 +84,19 @@ async def help(ctx):
             description += "\n" + "`$clearplayers` - Removes all players from the game."
             embed.add_field(name = "Player Management", value = description, inline = False)
 
-            description = "\n\n" + "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
+            description = "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
             description += "\n" + "`$storechannels` - Stores the channels into a text document for later use."
             description += "\n" + "`$loadchannels` - Loads the stored channels from the text document for use."
             description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "\n\n" + "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
+            description = "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
             description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
             description += "\n" + "`$end` - Forcefully ends the game. Players remain in the game, with their roles."
             description += "\n" + "`$reset` - Forcefully ends and resets the game. Removes all players from the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
-            description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
+            description = "`$timer` - Starts a timer for a specified amount of minutes."
             description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100. **WARNING - THIS ACTION CANNOT BE CANCELLED.**"
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
@@ -101,7 +104,8 @@ async def help(ctx):
 
             # Dev commands
             if ctx.author.id == 221115928933302272:
-                description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
+                description = "`$test` - Test command for testing purposes."
+                description += "\n" + "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
                 description += "\n" + "`$allowdupes` - Toggles whether or not duplicate players are allowed."
                 description += "\n" + "`$quickstart` - Quickly sets up the game for testing."
 
@@ -612,6 +616,41 @@ async def next(ctx):
 
 # ---------------------------------------------------------------------------------------
 
+@client.command(pass_context = True, aliases = ["timeremaining"])
+async def time(ctx):
+    await asyncio.sleep(0.1)
+
+    # Day, Evening, or Night
+    if gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+        minutes_passed = (int)(gameplay.second_count / 60)
+        minutes_remaining = (int)(gameplay.timer / 60)
+
+        title = "{} of Day {}".format("Daytime" if gameplay.game_phase == 3 else gameplay.game_phase.name, gameplay.day_number)
+        description = "{} minute{} {} passed.\n{} minute{} remain{}.".format("Less than 1" if minutes_passed < 1 else minutes_passed, \
+            "" if minutes_passed <= 1 else "s", \
+            "has" if minutes_passed <= 1 else "have", \
+            \
+            "Less than 1" if minutes_remaining < 1 else minutes_remaining, \
+            "" if minutes_remaining <= 1 else "s", \
+            "s" if minutes_remaining <= 1 else "")
+
+        embed = discord.Embed(color = 0x0080ff, title = title, description = description)
+        await ctx.send(embed = embed)
+
+    # Morning
+    elif gameplay.game_phase == Game_Phase.Morning:
+        title = "Morning of Day {}".format(gameplay.day_number)
+        embed = discord.Embed(color = 0x0080ff, title = title, description = "")
+        await ctx.send(embed = embed)
+
+    # Game not in progress
+    else:
+        description = "The game is not in progress, so the time remaining cannot be checked."
+        embed = discord.Embed(color = 0xff0000, title = "Game Not In Progress", description = description)
+        await ctx.send(embed = embed)
+
+# ---------------------------------------------------------------------------------------
+
 @client.command(pass_context = True)
 async def poll(ctx):
     await asyncio.sleep(0.1)
@@ -703,7 +742,9 @@ async def on_reaction_add(reaction, user):
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    await ctx.send("{}".format(int(gameplay.game_phase)))
+    title = "Morning of Day {}".format(gameplay.day_number)
+    embed = discord.Embed(color = 0x0080ff, title = title, description = "Morning will end soon.")
+    await ctx.send(embed = embed)
 
 # ---------------------------------------------------------------------------------------
 
