@@ -390,7 +390,14 @@ async def listchannels(ctx):
 async def addplayer(ctx):
     await asyncio.sleep(0.1)
 
-    if check_perms(ctx):
+    # Check if game is running
+    if gameplay.game_phase > Game_Phase.Null:
+        description = "Cannot edit players while the game is in progress."
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Edit Players", description = description)
+        await ctx.send(embed = embed)
+
+    # Check permission
+    elif check_perms(ctx):
         # Add player(s)
         names_str = ""
         global allow_duplicate_players
@@ -423,7 +430,15 @@ async def addplayer(ctx):
 @client.command(pass_context = True, aliases = ["removeplayers", "remove"])
 async def removeplayer(ctx):
     await asyncio.sleep(0.1)
-    if check_perms(ctx):
+
+    # Check if game is running
+    if gameplay.game_phase > Game_Phase.Null:
+        description = "Cannot edit players while the game is in progress."
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Edit Players", description = description)
+        await ctx.send(embed = embed)
+
+    # Check permissions
+    elif check_perms(ctx):
         await ctx.send(players.Player_Manager.remove_player(ctx.message.mentions))
     else:
         await insufficient_perms(ctx)
@@ -431,7 +446,15 @@ async def removeplayer(ctx):
 @client.command(pass_context = True)
 async def clearplayers(ctx):
     await asyncio.sleep(0.1)
-    if check_perms(ctx):
+
+    # Check if game is running
+    if gameplay.game_phase > Game_Phase.Null:
+        description = "Cannot edit players while the game is in progress."
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Edit Players", description = description)
+        await ctx.send(embed = embed)
+
+    # Check permissions
+    elif check_perms(ctx):
         await ctx.send(players.Player_Manager.clear_players())
     else:
         await insufficient_perms(ctx)
@@ -614,6 +637,33 @@ async def next(ctx):
     else:
         await insufficient_perms(ctx)
 
+@client.command(pass_context = True)
+async def pause(ctx):
+    await asyncio.sleep(0.1)
+
+    # Game not in progress
+    if gameplay.game_phase < Game_Phase.Morning or gameplay.game_phase > Game_Phase.Night:
+        embed = discord.Embed(color = 0xff0000, title = "Game Not In Progress", description = "The game is not in progress, and cannot be paused.")
+        await ctx.send(embed = embed)
+
+    # Check permission
+    elif check_perms(ctx):
+        # Game is paused -> unpause
+        if gameplay.pause_timer:
+            gameplay.pause_timer = False
+            embed = discord.Embed(color = 0x0080ff, title = "Game Unpaused", description = "The game has been unpaused.")
+            await ctx.send(embed = embed)
+
+        # Game is not paused -> pause
+        else:
+            gameplay.pause_timer = True
+            embed = discord.Embed(color = 0xffff00, title = "⚠️ Game Paused ⚠️", description = "The game has been paused.")
+            await ctx.send(embed = embed)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
+
 # ---------------------------------------------------------------------------------------
 
 @client.command(pass_context = True, aliases = ["timeremaining"])
@@ -622,11 +672,17 @@ async def time(ctx):
 
     # Day, Evening, or Night
     if gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+        # Warning if game is paused
+        description = ""
+        if gameplay.pause_timer:
+            description += "⚠️ The game is currently paused. ⚠️\n\n"
+
+        # Get time remaining string
         minutes_passed = (int)(gameplay.second_count / 60)
         minutes_remaining = (int)(gameplay.timer / 60)
 
         title = "{} of Day {}".format("Daytime" if gameplay.game_phase == 3 else gameplay.game_phase.name, gameplay.day_number)
-        description = "{} minute{} {} passed.\n{} minute{} remain{}.".format("Less than 1" if minutes_passed < 1 else minutes_passed, \
+        description += "{} minute{} {} passed.\n{} minute{} remain{}.".format("Less than 1" if minutes_passed < 1 else minutes_passed, \
             "" if minutes_passed <= 1 else "s", \
             "has" if minutes_passed <= 1 else "have", \
             \
@@ -634,7 +690,8 @@ async def time(ctx):
             "" if minutes_remaining <= 1 else "s", \
             "s" if minutes_remaining <= 1 else "")
 
-        embed = discord.Embed(color = 0x0080ff, title = title, description = description)
+        # Send embed / Yellow if paused, blue otherwise
+        embed = discord.Embed(color = 0xffff00 if gameplay.pause_timer else 0x0080ff, title = title, description = description)
         await ctx.send(embed = embed)
 
     # Morning
@@ -742,8 +799,14 @@ async def on_reaction_add(reaction, user):
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    title = "Morning of Day {}".format(gameplay.day_number)
-    embed = discord.Embed(color = 0x0080ff, title = title, description = "Morning will end soon.")
+    embed = discord.Embed(color = 0xffff00, title = "Game Paused", description = "⚠️ The game has been paused. ⚠️")
+    await ctx.send(embed = embed)
+
+@client.command(pass_context = True)
+async def test2(ctx):
+    await asyncio.sleep(0.1)
+
+    embed = discord.Embed(color = 0xffff00, title = "⚠️ Game Paused ⚠️", description = "The game has been paused.")
     await ctx.send(embed = embed)
 
 # ---------------------------------------------------------------------------------------

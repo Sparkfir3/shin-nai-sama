@@ -13,10 +13,15 @@ async def get_dm_channel(user):
 async def get_participant_role():
     guild = channels["meeting"].guild
     role = discord.utils.get(guild.roles, name="Feast Participant")
+
+    # Create role
     if role == None:
         return await guild.create_role(name = "Feast Participant")
+
+    # Delete role and create new one
     else:
-        return role
+        await role.delete()
+        return await guild.create_role(name = "Feast Participant")
 
 async def get_dead_role():
     guild = channels["meeting"].guild

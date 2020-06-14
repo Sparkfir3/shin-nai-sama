@@ -25,6 +25,8 @@ end_setup = True
 run_game = False
 next_phase = False
 
+pause_timer = False
+
 participant_role = None
 dead_role = None
 
@@ -87,7 +89,7 @@ async def continue_start(channel):
             await channels["wolves"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["snake"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["spider"].set_permissions(everyone, read_messages = False, send_messages = False)
-            await channels["dead"].set_permissions(everyone, view_channel = False, read_messages = True, send_messages = True)
+            await channels["dead"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["voice_meeting"].set_permissions(everyone, view_channel = False)
             await channels["voice_wolves"].set_permissions(everyone, view_channel = False)
 
@@ -279,14 +281,21 @@ async def day():
     # Meeting hall is opened during the morning
 
     # Timer
+    global pause_timer
     while not next_phase:
         await asyncio.sleep(1)
+
+        # Timer paused
+        if pause_timer:
+            continue
+
+        # Increment timer
         timer -= 1
         second_count += 1
 
+        # Check next phase or warnings
         if timer <= 0:
             next_phase = True
-
         else:
             await timer_warning(channel, timer)
 
@@ -308,14 +317,21 @@ async def evening():
     # TODO - message snake and spider channels to have them do their thing
 
     # Timer
+    global pause_timer
     while not next_phase:
         await asyncio.sleep(1)
+
+        # Timer paused
+        if pause_timer:
+            continue
+
+        # Increment timer
         timer -= 1
         second_count += 1
 
+        # Check next phase or warnings
         if timer <= 0:
             next_phase = True
-
         else:
             await timer_warning(channel, timer, phase = "afternoon")
 
@@ -356,14 +372,21 @@ async def night():
         await asyncio.sleep(0.1)
 
     # Timer
+    global pause_timer
     while not next_phase:
         await asyncio.sleep(1)
+
+        # Timer paused
+        if pause_timer:
+            continue
+
+        # Increment timer
         timer -= 1
         second_count += 1
 
+        # Check next phase or warnings
         if timer <= 0:
             next_phase = True
-
         else:
             await timer_warning(channel, timer, phase = "night")
 
@@ -404,13 +427,15 @@ async def reset_game(ctx, reset_players = False):
 
 # Resets the game; called whenever a reset is needed
 async def on_reset(reset_players = False):
-    global game_phase, day_number, second_count, end_setup, run_game, next_phase, participant_role, dead_role
+    global game_phase, day_number, second_count, end_setup, run_game, next_phase, pause_timer, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
     second_count = 0
     end_setup = True
     run_game = False
     next_phase = True
+
+    pause_timer = False
 
     participant_role = None
     dead_role = None
