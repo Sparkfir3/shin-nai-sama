@@ -100,7 +100,7 @@ async def continue_start(channel):
 
             # DM players
             await dm_roles()
-            await channel.send("Humans, monkeys, and the crow have been sent their roles.")
+            await channel.send("Humans, monkeys, and the crow have been sent their roles...")
 
             # Setup channels
             await asyncio.sleep(0.5)
@@ -179,9 +179,9 @@ async def continue_start(channel):
         # End game
 
     # Error
-    except Exception as inst:
+    except Exception as e:
         await on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "There was an error in the game:\n{}.\n\nThe game has been forcefully reset.".format(inst))
+        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "There was an error in the game:\n{}.\n\nThe game has been forcefully reset.".format(e))
         await channel.send(embed = embed)
 
 async def dm_roles():
@@ -226,7 +226,7 @@ async def setup_channels_perms(channel):
     await channels["wolves"].send("{}\n\n{}".format(mention_wolves.strip(), start_role_messages["wolves"]))
 
     await asyncio.sleep(0.5)
-    await channel.send("Wolves have been setup.")
+    await channel.send("Wolves have been setup...")
 
     # Snake
     await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
@@ -234,7 +234,7 @@ async def setup_channels_perms(channel):
     await channels["snake"].send("{}\n\n{}".format(players.Player_Manager.snake.user.mention, start_role_messages["snake"]))
 
     await asyncio.sleep(0.5)
-    await channel.send("Snake has been setup.")
+    await channel.send("Snake has been setup...")
 
     # Spider
     await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
@@ -242,7 +242,7 @@ async def setup_channels_perms(channel):
     await channels["spider"].send("{}\n\n{}".format(players.Player_Manager.spider.user.mention, start_role_messages["spider"]))
 
     await asyncio.sleep(0.5)
-    await channel.send("Spider has been setup.")
+    await channel.send("Spider has been setup...")
 
 # ---------------------------------------------------------------------------------
 
@@ -345,12 +345,23 @@ async def evening():
     await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
     await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
 
+    # Kick players from VC
+    for user in channels["voice_meeting"].members:
+        # Kick alive players
+        try:
+            if players.Player_Manager.has_player_id(user.id):
+                await player.user.move_to(None)
+        except Exception as e:
+            await channels["moderator"].send("Error: {}".format(e))
+
+        # TODO - unmute dead players
+
 async def night():
     global next_phase, game_phase, timer, second_count
     next_phase = False
     game_phase = Game_Phase.Night
 
-    timer = 3 * 60
+    timer = 4 * 60
     second_count = 0
     channel = channels["wolves"]
 
@@ -369,6 +380,7 @@ async def night():
     if day_number == 1 and players.Player_Manager.badger_alive:
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["badger"].format(mention_wolves.strip()))
+        await channels["moderator"].send("The badger has been sent their updated role.")
         await asyncio.sleep(0.1)
 
     # Timer
@@ -411,12 +423,6 @@ async def timer_warning(channel, timer, phase = "day"):
         await channel.send("**10 seconds remain in the {}.**".format(phase))
     elif timer <= 5: # 5 Second countdown
         await channel.send("**{} second{} remaining.**".format(timer, "" if timer == 1 else "s"))
-
-# ---------------------------------------------------------------------------------
-
-# TODO
-async def pause_game():
-    None
 
 # ---------------------------------------------------------------------------------
 

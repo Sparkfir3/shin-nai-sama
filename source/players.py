@@ -136,6 +136,22 @@ class Player_Manager(object):
         cls.players = []
         return "All {} players have been removed.".format(amount)
 
+    @classmethod
+    def has_player_id(cls, user_id, dead_players = False):
+        # Alive players
+        if not dead_players:
+            for player in cls.players:
+                if user_id == player.id:
+                    return True
+            return False
+
+        # Dead players
+        else:
+            for player in cls.players_dead:
+                if user_id == player.id:
+                    return True
+            return False
+
     # -------------------------------------------
 
     # Listing players

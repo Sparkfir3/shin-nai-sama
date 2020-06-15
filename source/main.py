@@ -799,15 +799,12 @@ async def on_reaction_add(reaction, user):
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    embed = discord.Embed(color = 0xffff00, title = "Game Paused", description = "⚠️ The game has been paused. ⚠️")
-    await ctx.send(embed = embed)
+    try:
+        for user in ctx.message.mentions:
+            await user.move_to(None)
 
-@client.command(pass_context = True)
-async def test2(ctx):
-    await asyncio.sleep(0.1)
-
-    embed = discord.Embed(color = 0xffff00, title = "⚠️ Game Paused ⚠️", description = "The game has been paused.")
-    await ctx.send(embed = embed)
+    except Exception as e:
+        await ctx.send("Error: {}".format(e))
 
 # ---------------------------------------------------------------------------------------
 
