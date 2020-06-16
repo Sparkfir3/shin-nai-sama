@@ -13,10 +13,15 @@ async def get_dm_channel(user):
 async def get_participant_role():
     guild = channels["meeting"].guild
     role = discord.utils.get(guild.roles, name="Feast Participant")
+
+    # Create role
     if role == None:
         return await guild.create_role(name = "Feast Participant")
+
+    # Delete role and create new one
     else:
-        return role
+        await role.delete()
+        return await guild.create_role(name = "Feast Participant")
 
 async def get_dead_role():
     guild = channels["meeting"].guild
@@ -27,11 +32,14 @@ async def get_dead_role():
         return role
 
 def ordinalize(number):
-    if number % 10 == 1 and number != 11:
+    mod10 = number % 10
+    mod100 = number % 100
+    
+    if mod10 == 1 and mod100 != 11:
         return "{}st".format(number)
-    elif number % 10 == 2 and number != 12:
+    elif mod10 == 2 and mod100 != 12:
         return "{}nd".format(number)
-    elif number % 10 == 3 and number != 13:
+    elif mod10 == 3 and mod100 != 13:
         return "{}rd".format(number)
     else:
         return "{}th".format(number)

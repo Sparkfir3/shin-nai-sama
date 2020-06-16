@@ -29,6 +29,7 @@ sys.path.append("source/utility")
 from permissions import check_perms
 from permissions import insufficient_perms
 import confirmations
+import misc
 
 # Import gameplay stuff
 import gameplay
@@ -60,11 +61,17 @@ async def help(ctx):
 
     if ctx.invoked_subcommand is None:
         # Regular commands
-        description = "`$help` - Lists all available bot comamnds."
-        description += "\n" + "`$poll` - Starts a poll with the given text."
-        description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
-
+        description = "\n" + "`$poll` - Starts a poll with the given text."
+        description += "\n" + "`$listplayers` - Lists all players currently in the game."
         embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Commands", description = description)
+
+        description = "\n" + "`$time` - Checks the current time remaining in the day."
+        embed.add_field(name = "In-Game Commands", value = description, inline = False)
+
+        description = "\n" + "`$help` - Lists all available bot comamnds."
+        description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
+        embed.add_field(name = "Miscellaneous", value = description, inline = False)
+
         await ctx.send(embed = embed)
 
         # Moderator commands
@@ -78,18 +85,19 @@ async def help(ctx):
             description += "\n" + "`$clearplayers` - Removes all players from the game."
             embed.add_field(name = "Player Management", value = description, inline = False)
 
-            description = "\n\n" + "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
+            description = "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
             description += "\n" + "`$storechannels` - Stores the channels into a text document for later use."
             description += "\n" + "`$loadchannels` - Loads the stored channels from the text document for use."
             description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "\n\n" + "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
+            description = "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
             description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
-            description += "\n" + "`$reset` - Forcefully ends and resets the game."
+            description += "\n" + "`$end` - Forcefully ends the game. Players remain in the game, with their roles."
+            description += "\n" + "`$reset` - Forcefully ends and resets the game. Removes all players from the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
-            description = "\n\n" + "`$timer` - Starts a timer for a specified amount of minutes."
+            description = "`$timer` - Starts a timer for a specified amount of minutes."
             description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100. **WARNING - THIS ACTION CANNOT BE CANCELLED.**"
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
@@ -97,7 +105,8 @@ async def help(ctx):
 
             # Dev commands
             if ctx.author.id == 221115928933302272:
-                description = "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
+                description = "`$test` - Test command for testing purposes."
+                description += "\n" + "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
                 description += "\n" + "`$allowdupes` - Toggles whether or not duplicate players are allowed."
                 description += "\n" + "`$quickstart` - Quickly sets up the game for testing."
 
@@ -146,7 +155,7 @@ async def ping(ctx):
 
 # Dev commands
 allow_duplicate_players = False
-@client.command(pass_context = True, aliases = ["allowdupes"])
+@client.command(pass_context = True, aliases = ["allowdupes", "enabledupes"])
 async def allowduplicates(ctx):
     await asyncio.sleep(0.1)
     # Only Sparkfire can use this command
@@ -382,7 +391,14 @@ async def listchannels(ctx):
 async def addplayer(ctx):
     await asyncio.sleep(0.1)
 
-    if check_perms(ctx):
+    # Check if game is running
+    if gameplay.game_phase > Game_Phase.Null:
+        description = "Cannot edit players while the game is in progress."
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Edit Players", description = description)
+        await ctx.send(embed = embed)
+
+    # Check permission
+    elif check_perms(ctx):
         # Add player(s)
         names_str = ""
         global allow_duplicate_players
@@ -403,8 +419,12 @@ async def addplayer(ctx):
         if names_str == "":
             await ctx.send("No valid players given.")
         # Valid players added to list
-        else:
-            await ctx.send("Added {} to list of players.\nThere are now {} players.".format(names_str, len(players.Player_Manager.players)))
+        else:            
+            length = len(players.Player_Manager.players)
+            await ctx.send("Added {} to the list of players.\nThere {} now {} player{}.".format(names_str, \
+                "are" if length > 1 else "is", \
+                length, \
+                "s" if length > 1 else ""))
 
     # Insufficient Perms
     else:
@@ -415,7 +435,15 @@ async def addplayer(ctx):
 @client.command(pass_context = True, aliases = ["removeplayers", "remove"])
 async def removeplayer(ctx):
     await asyncio.sleep(0.1)
-    if check_perms(ctx):
+
+    # Check if game is running
+    if gameplay.game_phase > Game_Phase.Null:
+        description = "Cannot edit players while the game is in progress."
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Edit Players", description = description)
+        await ctx.send(embed = embed)
+
+    # Check permissions
+    elif check_perms(ctx):
         await ctx.send(players.Player_Manager.remove_player(ctx.message.mentions))
     else:
         await insufficient_perms(ctx)
@@ -423,7 +451,15 @@ async def removeplayer(ctx):
 @client.command(pass_context = True)
 async def clearplayers(ctx):
     await asyncio.sleep(0.1)
-    if check_perms(ctx):
+
+    # Check if game is running
+    if gameplay.game_phase > Game_Phase.Null:
+        description = "Cannot edit players while the game is in progress."
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Edit Players", description = description)
+        await ctx.send(embed = embed)
+
+    # Check permissions
+    elif check_perms(ctx):
         await ctx.send(players.Player_Manager.clear_players())
     else:
         await insufficient_perms(ctx)
@@ -558,8 +594,33 @@ async def resetgame(ctx):
 
     # Check permission
     if check_perms(ctx):
-        gameplay.run_game = False
-        await gameplay.reset_game(ctx)
+        # Send confirmation message
+        embed = discord.Embed(color = 0xffff00, title = "⚠️ Reset Game? ⚠️", description = "Are you sure you want to reset the game?\nThis will remove all players and forcefully end the game if it is in progress.")
+        message = await ctx.send(embed = embed)
+
+        await confirmations.confirm_reset_game(ctx, message)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
+
+@client.command(pass_context = True, aliases = ["end"])
+async def endgame(ctx):
+    await asyncio.sleep(0.1)
+
+    # Check permission
+    if check_perms(ctx):
+        # Cannot end game currently
+        if gameplay.game_phase <= 1 or gameplay.game_phase >= 6:
+            embed = discord.Embed(color = 0xff0000, title = "Failed to End Game", description = "The game is not in progress or is currently starting, and cannot be forcefully ended.")
+            await ctx.send(embed = embed)
+            return
+
+        # Send confirmation message
+        embed = discord.Embed(color = 0xffff00, title = "⚠️ Forcefully End Game? ⚠️", description = "Are you sure you want to forcefully end the game?")
+        message = await ctx.send(embed = embed)
+
+        await confirmations.confirm_end_game(ctx, message)
 
     # Insufficient permission
     else:
@@ -592,6 +653,75 @@ async def next(ctx):
     # Insufficient permission
     else:
         await insufficient_perms(ctx)
+
+@client.command(pass_context = True)
+async def pause(ctx):
+    await asyncio.sleep(0.1)
+
+    # Game not in progress
+    if gameplay.game_phase < Game_Phase.Morning or gameplay.game_phase > Game_Phase.Night:
+        embed = discord.Embed(color = 0xff0000, title = "Game Not In Progress", description = "The game is not in progress, and cannot be paused.")
+        await ctx.send(embed = embed)
+
+    # Check permission
+    elif check_perms(ctx):
+        # Game is paused -> unpause
+        if gameplay.pause_timer:
+            gameplay.pause_timer = False
+            embed = discord.Embed(color = 0x0080ff, title = "Game Unpaused", description = "The game has been unpaused.")
+            await ctx.send(embed = embed)
+
+        # Game is not paused -> pause
+        else:
+            gameplay.pause_timer = True
+            embed = discord.Embed(color = 0xffff00, title = "⚠️ Game Paused ⚠️", description = "The game has been paused.")
+            await ctx.send(embed = embed)
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True, aliases = ["timeremaining"])
+async def time(ctx):
+    await asyncio.sleep(0.1)
+
+    # Day, Evening, or Night
+    if gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+        # Warning if game is paused
+        description = ""
+        if gameplay.pause_timer:
+            description += "⚠️ The game is currently paused. ⚠️\n\n"
+
+        # Get time remaining string
+        minutes_passed = (int)(gameplay.second_count / 60)
+        minutes_remaining = (int)(gameplay.timer / 60)
+
+        title = "{} of Day {}".format("Daytime" if gameplay.game_phase == 3 else gameplay.game_phase.name, gameplay.day_number)
+        description += "{} minute{} {} passed.\n{} minute{} remain{}.".format("Less than 1" if minutes_passed < 1 else minutes_passed, \
+            "" if minutes_passed <= 1 else "s", \
+            "has" if minutes_passed <= 1 else "have", \
+            \
+            "Less than 1" if minutes_remaining < 1 else minutes_remaining, \
+            "" if minutes_remaining <= 1 else "s", \
+            "s" if minutes_remaining <= 1 else "")
+
+        # Send embed / Yellow if paused, blue otherwise
+        embed = discord.Embed(color = 0xffff00 if gameplay.pause_timer else 0x0080ff, title = title, description = description)
+        await ctx.send(embed = embed)
+
+    # Morning
+    elif gameplay.game_phase == Game_Phase.Morning:
+        title = "Morning of Day {}".format(gameplay.day_number)
+        embed = discord.Embed(color = 0x0080ff, title = title, description = "")
+        await ctx.send(embed = embed)
+
+    # Game not in progress
+    else:
+        description = "The game is not in progress, so the time remaining cannot be checked."
+        embed = discord.Embed(color = 0xff0000, title = "Game Not In Progress", description = description)
+        await ctx.send(embed = embed)
 
 # ---------------------------------------------------------------------------------------
 
@@ -634,14 +764,22 @@ async def timer(ctx, *args):
 async def clearchat(ctx, *args):
     await asyncio.sleep(0.1)
 
+    # Check permissions
     if check_perms(ctx):
+        # Get amount
         amount = 100
         try:
             amount = int(args[0])
         except:
             None
 
-        await ctx.channel.purge(limit = amount)
+        # Send confirmation message
+        message = await ctx.send("Clear {} message{} from chat?".format(amount, "" if amount == 1 else "s"))
+        await confirmations.confirm_clear_chat(ctx, message, amount + 2)
+
+    # Insufficient permissions
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -680,15 +818,57 @@ async def on_reaction_add(reaction, user):
             await channel.send(embed = embed)
         return
 
-# ---------------------------------------------------------------------------------------
+    # Clear chat confirmation
+    if confirm_message["clear_chat"] != None and reaction.message.id == confirm_message["clear_chat"].id and confirm_user["clear_chat"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["clear_chat"] = True
 
-import misc
+        elif reaction.emoji == '❌':
+            confirm_message["clear_chat"] = None
+            await channel.send("Clear chat cancelled.")
+        return
+
+    # End game confirmation
+    if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["end_game"] = None
+
+            gameplay.run_game = False
+            await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
+
+        elif reaction.emoji == '❌':
+            confirm_message["end_game"] = None
+            await channel.send("Force ending of game cancelled.")
+        return
+
+    # Reset game confirmation
+    if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["reset_game"] = None
+
+            gameplay.run_game = False
+            await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
+
+        elif reaction.emoji == '❌':
+            confirm_message["reset_game"] = None
+            await channel.send("Reset game cancelled.")
+        return
+
+# ---------------------------------------------------------------------------------------
 
 @client.command(pass_context = True)
 async def test(ctx):
     await asyncio.sleep(0.1)
 
-    await ctx.send("{}".format(int(gameplay.game_phase)))
+    try:
+        test = 10
+        await ctx.send(test)
+
+        test = "20"
+        await ctx.send(test)
+
+    except Exception as e:
+        await ctx.send("Error: {}".format(e))
 
 # ---------------------------------------------------------------------------------------
 

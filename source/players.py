@@ -136,12 +136,37 @@ class Player_Manager(object):
         cls.players = []
         return "All {} players have been removed.".format(amount)
 
+    @classmethod
+    def has_player_id(cls, user_id, dead_players = False):
+        # Alive players
+        if not dead_players:
+            for player in cls.players:
+                if user_id == player.id:
+                    return True
+            return False
+
+        # Dead players
+        else:
+            for player in cls.players_dead:
+                if user_id == player.id:
+                    return True
+            return False
+
     # -------------------------------------------
 
     # Listing players
     @classmethod
     def list_players(cls):
-        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True))
+        # No players
+        if len(cls.players) == 0:
+            return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
+
+        # List players
+        description = "There {} {} player{} in the game:\n\n{}".format("is" if len(cls.players) == 1 else "are", \
+            len(cls.players), \
+            "s" if len(cls.players) != 1 else "", \
+            cls.list_players_raw(mention = True))
+        return discord.Embed(color = 0x0080ff, title = "List of Players", description = description)
 
     @classmethod
     def list_players_with_roles(cls):
