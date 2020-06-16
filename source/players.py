@@ -157,7 +157,15 @@ class Player_Manager(object):
     # Listing players
     @classmethod
     def list_players(cls):
-        description = "There are {} player{} are in the game:\n\n{}".format(len(cls.players), "s" if len(cls.players) != 1 else "", cls.list_players_raw(mention = True))
+        # No players
+        if len(cls.players) == 0:
+            return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
+
+        # List players
+        description = "There {} {} player{} in the game:\n\n{}".format("is" if len(cls.players) == 1 else "are", \
+            len(cls.players), \
+            "s" if len(cls.players) != 1 else "", \
+            cls.list_players_raw(mention = True))
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = description)
 
     @classmethod

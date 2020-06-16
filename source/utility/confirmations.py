@@ -36,8 +36,8 @@ async def confirm_roles(channel, message, user):
     await reactions.add_confirm_reactions(message)
     # on_reaction_add event handles yes/no answer
 
-    # Timeout if user has not reacted in time (60 seconds)
-    await asyncio.sleep(60)
+    # Timeout if user has not reacted in time (5 minutes)
+    await asyncio.sleep(5 * 60)
     if confirm_message["roles"] != None and message.id == confirm_message["roles"].id:
         confirm_message["roles"] = None
         confirm_user["roles"] = None

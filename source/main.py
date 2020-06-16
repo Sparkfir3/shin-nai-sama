@@ -419,8 +419,12 @@ async def addplayer(ctx):
         if names_str == "":
             await ctx.send("No valid players given.")
         # Valid players added to list
-        else:
-            await ctx.send("Added {} to list of players.\nThere are now {} players.".format(names_str, len(players.Player_Manager.players)))
+        else:            
+            length = len(players.Player_Manager.players)
+            await ctx.send("Added {} to the list of players.\nThere {} now {} player{}.".format(names_str, \
+                "are" if length > 1 else "is", \
+                length, \
+                "s" if length > 1 else ""))
 
     # Insufficient Perms
     else:
@@ -834,7 +838,7 @@ async def on_reaction_add(reaction, user):
 
         elif reaction.emoji == '❌':
             confirm_message["end_game"] = None
-            await channel.send("Force end game cancelled.")
+            await channel.send("Force ending of game cancelled.")
         return
 
     # Reset game confirmation
@@ -847,7 +851,7 @@ async def on_reaction_add(reaction, user):
 
         elif reaction.emoji == '❌':
             confirm_message["reset_game"] = None
-            await channel.send("Force reset game cancelled.")
+            await channel.send("Reset game cancelled.")
         return
 
 # ---------------------------------------------------------------------------------------
