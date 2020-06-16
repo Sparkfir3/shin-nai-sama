@@ -427,12 +427,16 @@ async def timer_warning(channel, timer, phase = "day"):
 # ---------------------------------------------------------------------------------
 
 # Called by the reset command
-async def reset_game(ctx, reset_players = False):
-    await on_reset(reset_players = reset_players)
-    await ctx.send("Game has been reset.")
+async def reset_game(channel, clear_player_list = False):
+    await on_reset(clear_player_list = clear_player_list)
+
+    if clear_player_list:
+        await channel.send("The game has been reset.")
+    else:
+        await channel.send("The game has been forcefully ended.")
 
 # Resets the game; called whenever a reset is needed
-async def on_reset(reset_players = False):
+async def on_reset(clear_player_list = False):
     global game_phase, day_number, second_count, end_setup, run_game, next_phase, pause_timer, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
@@ -458,9 +462,8 @@ async def on_reset(reset_players = False):
     except:
         None
 
-    # Reset player list
-    if reset_players:
-        players.Player_Manager.reset()
-
-async def reset_players():
-    players.Player_Manager.reset()
+    # Clear/reset player list
+    if clear_player_list:
+        players.Player_Manager.clear_players() # Clears player list
+    else:
+        players.Player_Manager.reset() # Resets but does not clear

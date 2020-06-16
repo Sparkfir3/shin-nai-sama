@@ -29,6 +29,7 @@ sys.path.append("source/utility")
 from permissions import check_perms
 from permissions import insufficient_perms
 import confirmations
+import misc
 
 # Import gameplay stuff
 import gameplay
@@ -589,8 +590,11 @@ async def resetgame(ctx):
 
     # Check permission
     if check_perms(ctx):
-        gameplay.run_game = False
-        await gameplay.reset_game(ctx, reset_players = True)
+        # Send confirmation message
+        embed = discord.Embed(color = 0xffff00, title = "⚠️ Reset Game? ⚠️", description = "Are you sure you want to reset the game?\nThis will remove all players and forcefully end the game if it is in progress.")
+        message = await ctx.send(embed = embed)
+
+        await confirmations.confirm_reset_game(ctx, message)
 
     # Insufficient permission
     else:
@@ -602,8 +606,17 @@ async def endgame(ctx):
 
     # Check permission
     if check_perms(ctx):
-        gameplay.run_game = False
-        await gameplay.reset_game(ctx, reset_players = False)
+        # Cannot end game currently
+        if gameplay.game_phase <= 1 or gameplay.game_phase >= 6:
+            embed = discord.Embed(color = 0xff0000, title = "Failed to End Game", description = "The game is not in progress or is currently starting, and cannot be forcefully ended.")
+            await ctx.send(embed = embed)
+            return
+
+        # Send confirmation message
+        embed = discord.Embed(color = 0xffff00, title = "⚠️ Forcefully End Game? ⚠️", description = "Are you sure you want to forcefully end the game?")
+        message = await ctx.send(embed = embed)
+
+        await confirmations.confirm_end_game(ctx, message)
 
     # Insufficient permission
     else:
@@ -747,14 +760,22 @@ async def timer(ctx, *args):
 async def clearchat(ctx, *args):
     await asyncio.sleep(0.1)
 
+    # Check permissions
     if check_perms(ctx):
+        # Get amount
         amount = 100
         try:
             amount = int(args[0])
         except:
             None
 
-        await ctx.channel.purge(limit = amount)
+        # Send confirmation message
+        message = await ctx.send("Clear {} message{} from chat?".format(amount, "" if amount == 1 else "s"))
+        await confirmations.confirm_clear_chat(ctx, message, amount + 2)
+
+    # Insufficient permissions
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -793,6 +814,42 @@ async def on_reaction_add(reaction, user):
             await channel.send(embed = embed)
         return
 
+    # Clear chat confirmation
+    if confirm_message["clear_chat"] != None and reaction.message.id == confirm_message["clear_chat"].id and confirm_user["clear_chat"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["clear_chat"] = True
+
+        elif reaction.emoji == '❌':
+            confirm_message["clear_chat"] = None
+            await channel.send("Clear chat cancelled.")
+        return
+
+    # End game confirmation
+    if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["end_game"] = None
+
+            gameplay.run_game = False
+            await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
+
+        elif reaction.emoji == '❌':
+            confirm_message["end_game"] = None
+            await channel.send("Force end game cancelled.")
+        return
+
+    # Reset game confirmation
+    if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
+        if reaction.emoji == '✅':
+            confirm_message["reset_game"] = None
+
+            gameplay.run_game = False
+            await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
+
+        elif reaction.emoji == '❌':
+            confirm_message["reset_game"] = None
+            await channel.send("Force reset game cancelled.")
+        return
+
 # ---------------------------------------------------------------------------------------
 
 @client.command(pass_context = True)
@@ -800,8 +857,11 @@ async def test(ctx):
     await asyncio.sleep(0.1)
 
     try:
-        for user in ctx.message.mentions:
-            await user.move_to(None)
+        test = 10
+        await ctx.send(test)
+
+        test = "20"
+        await ctx.send(test)
 
     except Exception as e:
         await ctx.send("Error: {}".format(e))

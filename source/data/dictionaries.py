@@ -3,12 +3,18 @@ import discord
 # Confirmation messages
 confirm_message = {
     "start" : None,
-    "roles" : None
+    "roles" : None,
+    "clear_chat" : None,
+    "end_game" : None,
+    "reset_game" : None
 }
 
 confirm_user = {
     "start" : None,
-    "roles" : None
+    "roles" : None,
+    "clear_chat" : None,
+    "end_game" : None,
+    "reset_game" : None
 }
 
 # Channels
