@@ -377,7 +377,7 @@ async def night():
 
     # Message badger on night 1
     global day_number
-    if day_number == 1 and players.Player_Manager.badger_alive:
+    if day_number == 1 and players.Player_Manager.badger_alive():
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["badger"].format(mention_wolves.strip()))
         await channels["moderator"].send("The badger has been sent their updated role.")

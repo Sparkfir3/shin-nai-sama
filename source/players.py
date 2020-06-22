@@ -84,23 +84,36 @@ class Player_Manager(object):
     humans = []
 
     snake = None
-    snake_alive = False
-
     spider = None
-    spider_alive = False
 
     monkeys_all = []
     monkeys = []
 
     crow = None
-    crow_alive = False
-
     badger = None
-    badger_alive = False
 
     # Wolves
     wolves_all = []
     wolves = []
+
+    # Attributes
+    @classmethod
+    def snake_alive(cls):
+        return cls.snake != None
+
+    @classmethod
+    def spider_alive(cls):
+        return cls.spider != None
+
+    @classmethod
+    def crow_alive(cls):
+        return cls.crow != None
+
+    @classmethod
+    def badger_alive(cls):
+        return cls.badger != None
+
+    # -------------------------------------------
 
     # Player management
     @classmethod
@@ -152,16 +165,70 @@ class Player_Manager(object):
                     return True
             return False
 
+    # -----
+
+    @classmethod
+    def kill_player(cls, user_id):
+        # Check player alive
+        for player in cls.players:
+            # Kill player
+            if player.id == user_id:
+                cls.players.remove(player)
+                cls.players_dead.append(player)
+
+                # Check snake
+                if cls.snake_alive() and cls.snake.id == user_id:
+                    cls.snake = None
+                # Check spider
+                if cls.spider_alive() and cls.spider.id == user_id:
+                    cls.spider = None
+                # Check crow
+                if cls.crow_alive() and cls.crow.id == user_id:
+                    cls.crow = None
+                # Check badger
+                if cls.badger_alive() and cls.badger.id == user_id:
+                    cls.badger = None
+
+                # Check monkey
+                for monkey in cls.monkeys:
+                    if monkey.id == user_id:
+                        cls.monkeys.remove(monkey)
+
+                # Check wolves
+                for wolf in cls.wolves:
+                    if wolf.id == user_id:
+                        cls.wolves.remove(wolf)
+
+                return True
+
+        return False
+
     # -------------------------------------------
 
     # Listing players
     @classmethod
     def list_players(cls):
         # No players
-        if len(cls.players) == 0:
+        if len(cls.players) == 0 and len(cls.players_dead) == 0:
             return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
 
-        # List players
+        # List players - dead vs. alive
+        if len(cls.players_dead) > 0:
+            # Alive
+            description = "{} player{} alive:\n\n{}".format(len(cls.players), \
+                "s are" if len(cls.players) != 1 else " is", \
+                cls.list_players_raw(mention = True))
+            embed = discord.Embed(color = 0x00080ff, title = "List of Players", description = description)
+
+            # Dead
+            description = "{} player{} dead:\n\n{}".format(len(cls.players_dead), \
+                "s are" if len(cls.players_dead) != 1 else " is", \
+                cls.list_players_raw(mention = True, dead_players = True))
+            embed.add_field(name = "Dead Players", value = description, inline = False)
+
+            return embed
+
+        # List players - only alive
         description = "There {} {} player{} in the game:\n\n{}".format("is" if len(cls.players) == 1 else "are", \
             len(cls.players), \
             "s" if len(cls.players) != 1 else "", \
@@ -173,16 +240,24 @@ class Player_Manager(object):
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True, role = True))
 
     @classmethod
-    def list_players_raw(cls, mention = False, role = False):
+    def list_players_raw(cls, mention = False, role = False, dead_players = False):
         text = ""
         # No players
         if len(cls.players) == 0:
             text = "No players are currently in the game."
         # Get players
         else:
-            for player in cls.players:
-                text += "{}{}\n".format(player.name if (not mention) else "<@{}>".format(player.id) \
-                    , " - {}".format(player.role_to_string()) if role else "")
+            # Alive
+            if not dead_players:
+                for player in cls.players:
+                    text += "{}{}\n".format(player.name if (not mention) else "<@{}>".format(player.id) \
+                        , " - {}".format(player.role_to_string()) if role else "")
+
+            # Dead
+            else:
+                for player in cls.players_dead:
+                    text += "{}{}\n".format(player.name if (not mention) else "<@{}>".format(player.id) \
+                        , " - {}".format(player.role_to_string()) if role else "")
         return text
 
     # -------------------------------------------
@@ -257,19 +332,13 @@ class Player_Manager(object):
         cls.humans = []
 
         cls.snake = None
-        cls.snake_alive = False
-
         cls.spider = None
-        cls.spider_alive = False
 
         cls.monkeys_all = []
         cls.monkeys = []
 
         cls.crow = None
-        cls.crow_alive = False
-
         cls.badger = None
-        cls.badger_alive = False
 
         # Wolves
         cls.wolves_all = []
