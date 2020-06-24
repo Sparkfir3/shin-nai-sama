@@ -311,8 +311,10 @@ async def evening():
     channel = channels["meeting"]
 
     # Open channels
-    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = True)
-    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = True)
+    if players.Player_Manager.snake_alive():
+        await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = True)
+    if players.Player_Manager.spider_alive():
+        await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = True)
 
     # TODO - message snake and spider channels to have them do their thing
 
@@ -342,8 +344,10 @@ async def evening():
         await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
         await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = False)
 
-    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
-    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
+    if players.Player_Manager.snake_alive():
+        await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
+    if players.Player_Manager.spider_alive():
+        await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
 
     # Kick players from VC
     for user in channels["voice_meeting"].members:

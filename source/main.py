@@ -603,7 +603,7 @@ async def kill(ctx, *args):
         for i, user in enumerate(ctx.message.mentions):
             if i == 0:
                 # Successfull kill
-                if players.Player_Manager.kill_player(user.id):
+                if await players.Player_Manager.kill_player(user.id):
 
                     # TODO - send proper death message
                     await ctx.send("Killed {}".format(user.mention))

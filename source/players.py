@@ -3,6 +3,7 @@ import discord
 import sys
 sys.path.append('source/data')
 from enums import Player_Types
+from dictionaries import channels
 
 import random
 from random import shuffle
@@ -168,38 +169,58 @@ class Player_Manager(object):
     # -----
 
     @classmethod
-    def kill_player(cls, user_id):
+    async def kill_player(cls, user_id):
         # Check player alive
         for player in cls.players:
-            # Kill player
-            if player.id == user_id:
-                cls.players.remove(player)
-                cls.players_dead.append(player)
+            try:
+                # Kill player
+                if player.id == user_id:
+                    cls.players.remove(player)
+                    cls.players_dead.append(player)
 
-                # Check snake
-                if cls.snake_alive() and cls.snake.id == user_id:
-                    cls.snake = None
-                # Check spider
-                if cls.spider_alive() and cls.spider.id == user_id:
-                    cls.spider = None
-                # Check crow
-                if cls.crow_alive() and cls.crow.id == user_id:
-                    cls.crow = None
-                # Check badger
-                if cls.badger_alive() and cls.badger.id == user_id:
-                    cls.badger = None
+                    # Check snake
+                    if cls.snake_alive() and cls.snake.id == user_id:
+                        cls.snake = None
+                        await channels["snake"].set_permissions(player.user, read_messages = True, send_messages = False)
+                    # Check spider
+                    if cls.spider_alive() and cls.spider.id == user_id:
+                        cls.spider = None
+                        await channels["spider"].set_permissions(player.user, read_messages = True, send_messages = False)
+                    # Check crow
+                    if cls.crow_alive() and cls.crow.id == user_id:
+                        cls.crow = None
+                    # Check badger
+                    if cls.badger_alive() and cls.badger.id == user_id:
+                        cls.badger = None
 
-                # Check monkey
-                for monkey in cls.monkeys:
-                    if monkey.id == user_id:
-                        cls.monkeys.remove(monkey)
+                    # Check monkey
+                    for monkey in cls.monkeys:
+                        if monkey.id == user_id:
+                            cls.monkeys.remove(monkey)
 
-                # Check wolves
-                for wolf in cls.wolves:
-                    if wolf.id == user_id:
-                        cls.wolves.remove(wolf)
+                    # Check wolves
+                    for wolf in cls.wolves:
+                        if wolf.id == user_id:
+                            cls.wolves.remove(wolf)
+                            await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
+                            await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = True, speak = False)
+                            break
 
-                return True
+                    # Set channel permissions
+                    await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
+                    #await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True, speak = False)
+                    await player.user.edit(mute = True)
+                    #await player.user.move_to(None)
+
+                    await channels["dead"].set_permissions(player.user, read_messages = True, send_messages = True)
+
+                    # Return
+                    return True
+
+            # Error
+            except Exception as e:
+                print("Error killing player (channels not set up): {}".format(e))
+                return False
 
         return False
 
@@ -286,15 +307,12 @@ class Player_Manager(object):
             # Power roles
             players[-1].type = Player_Types.Snake
             cls.snake = players.pop()
-            cls.snake_alive = True
 
             players[-1].type = Player_Types.Spider
             cls.spider = players.pop()
-            cls.spider_alive = True
 
             players[-1].type = Player_Types.Crow
             cls.crow = players.pop()
-            cls.crow_alive = True
 
             for i in range(2):
                 players[-1].type = Player_Types.Monkey
@@ -305,7 +323,6 @@ class Player_Manager(object):
             if have_badger:
                 players[-1].type = Player_Types.Badger
                 cls.badger = players.pop()
-                cls.badger_alive = True
 
             # Regular humans
             for i in range(len(players)):
