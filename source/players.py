@@ -208,9 +208,11 @@ class Player_Manager(object):
 
                     # Set channel permissions
                     await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
-                    #await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True, speak = False)
-                    await player.user.edit(mute = True)
-                    #await player.user.move_to(None)
+                    try:
+                        await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True, speak = False)
+                        await player.user.edit(mute = True)
+                    except:
+                        None
 
                     await channels["dead"].set_permissions(player.user, read_messages = True, send_messages = True)
 

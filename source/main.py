@@ -98,6 +98,7 @@ async def help(ctx):
             embed.add_field(name = "Game Management", value = description, inline = False)
 
             description = "`$kill` - Kills the given player. Can only kill 1 player at a time."
+            description += "\n" + "`$pause` - Pauses the game timer."
             embed.add_field(name = "Running the Game", value = description, inline = False)
 
             description = "`$timer` - Starts a timer for a specified amount of minutes."
@@ -192,7 +193,7 @@ async def quickstart(ctx):
             await asyncio.sleep(0.1)
             if len(ctx.message.mentions) > 0:
                 await asyncio.sleep(0.1)
-                for i in range(10):
+                for i in range(20):
                     await addplayer(ctx)
 
             await asyncio.sleep(0.5)
@@ -539,7 +540,7 @@ async def start(ctx):
 
         # Valid number of players
         if number_of_players >= 12:
-            embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\n\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
+            embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirmations.confirm_game_start(ctx, embed)
 
         # Confirm if player limit should be ignored
