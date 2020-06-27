@@ -133,10 +133,8 @@ async def gettingstarted(ctx):
 
         description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels."
         description += "\nYou can use the `$next` command to manually skip a phase, if you wish."
-        description += "\nThe `$reset` command will forcefully quit the game."
-        description += "\n\n**WARNING** - the game does not currently deal with dead players, meaning you must manually add players to dead chats."
-        description += "\nAll players are treated as alive, meaning dead players are also allowed to speak in channels (it sets this automatically), and you must manually moderate them to make sure they're behaving."
-        description += "\nPlayers are not kicked from voice channels when a phase ends. There is no way to pause or extend a phase's timer."
+        description += "\nUse the `$kill` command to kill off players."
+        description += "\nThe `$end` command will forcefully quit the game."
         embed.add_field(name = "Running the Game", value = description, inline = False)
 
         # -----
@@ -592,7 +590,7 @@ async def kill(ctx, *args):
 
     # Check if game is running or not
     # if gameplay.game_phase <= Game_Phase.Starting or gameplay.game_phase == Game_Phase.Ending:
-    #     description = "Cannot kill players if the game is in not progress."
+    #     description = "Cannot kill players if the game is not in progress."
     #     embed = discord.Embed(color = 0xff0000, title = "Cannot Kill Player", description = description)
     #     await ctx.send(embed = embed)
     #     return

@@ -68,8 +68,8 @@ async def on_start(user, fallback_channel):
         await confirmations.confirm_roles(fallback_channel, message, user)
 
     except Exception as inst:
-        on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}.".format(inst))
+        await on_reset()
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}\n\nThe game has been reset.".format(inst))
         await fallback_channel.send(embed = embed)
 
 # Called after user confirms role distribution
@@ -181,8 +181,8 @@ async def continue_start(channel):
 
     # Error
     except Exception as e:
-        await on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "There was an error in the game:\n{}.\n\nThe game has been forcefully reset.".format(e))
+        #await on_reset()
+        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "The game has crashed due to an error in the game:\n{}.\n\nUse the `$reset` command to reset the game.".format(e))
         await channel.send(embed = embed)
 
 async def dm_roles():
