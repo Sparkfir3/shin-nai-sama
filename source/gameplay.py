@@ -19,6 +19,7 @@ import confirmations
 
 game_phase = Game_Phase.Null
 day_number = 0
+previous_day_length = 0
 timer = 0
 second_count = 0
 end_setup = True
@@ -63,12 +64,12 @@ async def on_start(user, fallback_channel):
 
         # Confirm roles
         await asyncio.sleep(1)
-        message = await fallback_channel.send("Roles have been distributed, and have been privately sent to {}. Are you okay with this role distribution?".format(user.display_name))
+        message = await fallback_channel.send("Roles have been distributed, and have been privately sent to {}. Are you okay with this role distribution? You have 5 minutes to confirm this distribution.".format(user.display_name))
         await confirmations.confirm_roles(fallback_channel, message, user)
 
     except Exception as inst:
-        on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}.".format(inst))
+        await on_reset()
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}\n\nThe game has been reset.".format(inst))
         await fallback_channel.send(embed = embed)
 
 # Called after user confirms role distribution
@@ -114,7 +115,7 @@ async def continue_start(channel):
                 await player.user.add_roles(participant_role)
                 await asyncio.sleep(0.1)
 
-            await channel.send("The first morning will start in 15 minutes.\nUse the `$next` command to skip the timer and start the first morning.")
+            await channel.send("Setup complete. The first morning will start in 15 minutes.\nUse the `$next` command to skip the timer and start the first morning.")
 
         # Timer
         global end_setup
@@ -180,8 +181,8 @@ async def continue_start(channel):
 
     # Error
     except Exception as e:
-        await on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "There was an error in the game:\n{}.\n\nThe game has been forcefully reset.".format(e))
+        #await on_reset()
+        embed = discord.Embed(color = 0xff0000, title = "Game Crashed", description = "The game has crashed due to an error in the game:\n{}.\n\nUse the `$reset` command to reset the game.".format(e))
         await channel.send(embed = embed)
 
 async def dm_roles():
@@ -248,21 +249,30 @@ async def setup_channels_perms(channel):
 
 async def morning():
     await asyncio.sleep(0.5)
-    global day_number, game_phase
+    global day_number, previous_day_length, game_phase
     day_number += 1
     game_phase = Game_Phase.Morning
 
     # TODO - Message crow
 
     meeting_hall = channels["meeting"]
+    day_length = get_day_length()
     global participant_role
     # First morning
     if day_number == 1:
-        await meeting_hall.send(game_messages["first_morning"].format(participant_role.mention, len(players.Player_Manager.wolves)))
+        await meeting_hall.send(game_messages["first_morning"].format(participant_role.mention, len(players.Player_Manager.wolves), day_length))
 
     # Other mornings
     else:
-        await meeting_hall.send(game_messages["morning_no_death"].format(participant_role.mention, ordinalize(day_number)))
+        # Days get shorter
+        if day_length < previous_day_length:
+            await meeting_hall.send(game_messages["morning_no_death_time_change"].format(participant_role.mention, ordinalize(day_number), day_length))
+
+        # Days stay same
+        else:
+            await meeting_hall.send(game_messages["morning_no_death"].format(participant_role.mention, ordinalize(day_number), day_length))
+
+    previous_day_length = day_length
 
     # Open meeting hall
     for player in players.Player_Manager.players:
@@ -270,11 +280,11 @@ async def morning():
         await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True)
 
 async def day():
-    global next_phase, game_phase, timer, second_count
+    global next_phase, game_phase, timer, second_count, previous_day_length
     next_phase = False
     game_phase = Game_Phase.Day
 
-    timer = 30 * 60
+    timer = previous_day_length * 60
     second_count = 0
     channel = channels["meeting"]
 
@@ -311,8 +321,10 @@ async def evening():
     channel = channels["meeting"]
 
     # Open channels
-    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = True)
-    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = True)
+    if players.Player_Manager.snake_alive():
+        await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = True)
+    if players.Player_Manager.spider_alive():
+        await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = True)
 
     # TODO - message snake and spider channels to have them do their thing
 
@@ -342,19 +354,28 @@ async def evening():
         await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
         await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = False)
 
-    await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
-    await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
+    if players.Player_Manager.snake_alive():
+        await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
+    if players.Player_Manager.spider_alive():
+        await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
 
     # Kick players from VC
     for user in channels["voice_meeting"].members:
         # Kick alive players
         try:
             if players.Player_Manager.has_player_id(user.id):
-                await player.user.move_to(None)
+                await user.move_to(None)
+                continue
         except Exception as e:
             await channels["moderator"].send("Error: {}".format(e))
 
-        # TODO - unmute dead players
+        # Unmute dead players
+        try:
+            if players.Player_Manager.has_player_id(user.id, dead_players = True):
+                await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True, speak = True)
+                await user.edit(mute = False)
+        except:
+            None
 
 async def night():
     global next_phase, game_phase, timer, second_count
@@ -377,7 +398,7 @@ async def night():
 
     # Message badger on night 1
     global day_number
-    if day_number == 1 and players.Player_Manager.badger_alive:
+    if day_number == 1 and players.Player_Manager.badger_alive():
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["badger"].format(mention_wolves.strip()))
         await channels["moderator"].send("The badger has been sent their updated role.")
@@ -408,7 +429,18 @@ async def night():
     for wolf in players.Player_Manager.wolves:
         await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
         await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = False)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
+
+    # Mute dead players
+    for user in channels["voice_meeting"].members:
+        try:
+            if players.Player_Manager.has_player_id(user.id, dead_players = True):
+                await channels["voice_meeting"].set_permissions(user, view_channel = True, connect = True, speak = False)
+                await user.edit(mute = True)
+        except:
+            None
+
+# ---------------------------------------------------------------------------------
 
 async def timer_warning(channel, timer, phase = "day"):
     if timer == 600: # 10 Minutes
@@ -424,6 +456,17 @@ async def timer_warning(channel, timer, phase = "day"):
     elif timer <= 5: # 5 Second countdown
         await channel.send("**{} second{} remaining.**".format(timer, "" if timer == 1 else "s"))
 
+def get_day_length():
+    player_count = len(players.Player_Manager.players)
+    if player_count >= 20:
+        return 30
+    elif player_count >= 16:
+        return 25
+    elif player_count >= 12:
+        return 20
+    else:
+        return 15
+
 # ---------------------------------------------------------------------------------
 
 # Called by the reset command
@@ -437,9 +480,10 @@ async def reset_game(channel, clear_player_list = False):
 
 # Resets the game; called whenever a reset is needed
 async def on_reset(clear_player_list = False):
-    global game_phase, day_number, second_count, end_setup, run_game, next_phase, pause_timer, participant_role, dead_role
+    global game_phase, day_number, previous_day_length, second_count, end_setup, run_game, next_phase, pause_timer, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
+    previous_day_length = 0
     second_count = 0
     end_setup = True
     run_game = False

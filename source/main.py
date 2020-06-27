@@ -91,14 +91,18 @@ async def help(ctx):
             description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "`$start` - Starts the game. **WARNING - NOT FULLY FUNCTIONAL**"
+            description = "`$start` - Starts the game."
             description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
             description += "\n" + "`$end` - Forcefully ends the game. Players remain in the game, with their roles."
             description += "\n" + "`$reset` - Forcefully ends and resets the game. Removes all players from the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
+            description = "`$kill` - Kills the given player. Can only kill 1 player at a time."
+            description += "\n" + "`$pause` - Pauses the game timer."
+            embed.add_field(name = "Running the Game", value = description, inline = False)
+
             description = "`$timer` - Starts a timer for a specified amount of minutes."
-            description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100. **WARNING - THIS ACTION CANNOT BE CANCELLED.**"
+            description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100."
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
             await ctx.send(embed = embed)
@@ -129,10 +133,8 @@ async def gettingstarted(ctx):
 
         description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels."
         description += "\nYou can use the `$next` command to manually skip a phase, if you wish."
-        description += "\nThe `$reset` command will forcefully quit the game."
-        description += "\n\n**WARNING** - the game does not currently deal with dead players, meaning you must manually add players to dead chats."
-        description += "\nAll players are treated as alive, meaning dead players are also allowed to speak in channels (it sets this automatically), and you must manually moderate them to make sure they're behaving."
-        description += "\nPlayers are not kicked from voice channels when a phase ends. There is no way to pause or extend a phase's timer."
+        description += "\nUse the `$kill` command to kill off players."
+        description += "\nThe `$end` command will forcefully quit the game."
         embed.add_field(name = "Running the Game", value = description, inline = False)
 
         # -----
@@ -189,7 +191,7 @@ async def quickstart(ctx):
             await asyncio.sleep(0.1)
             if len(ctx.message.mentions) > 0:
                 await asyncio.sleep(0.1)
-                for i in range(10):
+                for i in range(20):
                     await addplayer(ctx)
 
             await asyncio.sleep(0.5)
@@ -536,7 +538,7 @@ async def start(ctx):
 
         # Valid number of players
         if number_of_players >= 12:
-            embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\n\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
+            embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirmations.confirm_game_start(ctx, embed)
 
         # Confirm if player limit should be ignored
@@ -581,6 +583,41 @@ async def start(ctx):
 # ---------------------------------------------------------------------------------------
 
 # TODO - kill players & yeet command
+
+@client.command(pass_context = True)
+async def kill(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check if game is running or not
+    # if gameplay.game_phase <= Game_Phase.Starting or gameplay.game_phase == Game_Phase.Ending:
+    #     description = "Cannot kill players if the game is not in progress."
+    #     embed = discord.Embed(color = 0xff0000, title = "Cannot Kill Player", description = description)
+    #     await ctx.send(embed = embed)
+    #     return
+
+    # Check permission
+    if check_perms(ctx):
+        #players.Player_Manager.kill_player()
+        
+        for i, user in enumerate(ctx.message.mentions):
+            if i == 0:
+                # Successfull kill
+                if await players.Player_Manager.kill_player(user.id):
+
+                    # TODO - send proper death message
+                    await ctx.send("Killed {}".format(user.mention))
+
+                # Could not kill
+                else:
+                    description = "Failed to kill {}, as they are not alive in the game.".format(user.mention)
+                    embed = discord.Embed(color = 0xff0000, title = "Failed to Kill Player", description = description)
+                    await ctx.send(embed = embed)
+
+                return
+
+    # Insufficient permission
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
