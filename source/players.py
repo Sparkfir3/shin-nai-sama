@@ -203,7 +203,7 @@ class Player_Manager(object):
                         if wolf.id == user_id:
                             cls.wolves.remove(wolf)
                             await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
-                            await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = True, speak = False)
+                            await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = False, speak = False)
                             break
 
                     # Set channel permissions
