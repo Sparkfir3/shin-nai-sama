@@ -747,6 +747,39 @@ async def time(ctx):
 # ---------------------------------------------------------------------------------------
 
 @client.command(pass_context = True)
+async def spectate(ctx):
+    await asyncio.sleep(0.1)
+
+    # Check game in progress - Day, Evening, or Night
+    if gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+        # Check if active player
+        if players.Player_Manager.has_player_id(ctx.author.id, dead_players = False) or players.Player_Manager.has_player_id(ctx.author.id, dead_players = True):
+            embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Participating players cannot spectate the game.")
+            await ctx.send(embed = embed)
+
+        # Successfully spectate
+        try:
+            # Set permissions
+            await channels["meeting"].set_permissions(ctx.author, read_messages = True, send_messages = False)
+            await channels["voice_meeting"].set_permissions(ctx.author, view_channel = True, connect = True, speak = False)
+
+            # Change nickname
+            try:
+                await ctx.author.edit(nick = "見 {}".format(ctx.author.display_name))
+            except:
+                embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Spectating permissions set up, but failed to change user's nickname.")
+
+        # Error occured
+        except Exception as e:
+            embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "An error occured while trying to spectate:\n{}".format(e))
+
+    else:
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Cannot spectate the game if it is not in progress.")
+        await ctx.send(embed = embed)
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True)
 async def poll(ctx):
     await asyncio.sleep(0.1)
 
@@ -882,11 +915,7 @@ async def test(ctx):
     await asyncio.sleep(0.1)
 
     try:
-        test = 10
-        await ctx.send(test)
-
-        test = "20"
-        await ctx.send(test)
+        await ctx.author.edit(nick = "死 {}".format(ctx.author.display_name))
 
     except Exception as e:
         await ctx.send("Error: {}".format(e))

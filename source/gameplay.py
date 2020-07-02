@@ -113,6 +113,13 @@ async def continue_start(channel):
             dead_role = await get_dead_role()
             for player in players.Player_Manager.players:
                 await player.user.add_roles(participant_role)
+
+                # Fix player nicknames
+                try:
+                    await player.user.edit(nick = player.user.display_name.replace("死", "").replace("見", "").strip())
+                except:
+                    None
+
                 await asyncio.sleep(0.1)
 
             await channel.send("Setup complete. The first morning will start in 15 minutes.\nUse the `$next` command to skip the timer and start the first morning.")

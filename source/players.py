@@ -216,6 +216,13 @@ class Player_Manager(object):
 
                     await channels["dead"].set_permissions(player.user, read_messages = True, send_messages = True)
 
+                    # Change nickname
+                    try:
+                        await player.user.edit(nick = "死 {}".format(player.user.display_name))
+
+                    except:
+                        await channels["moderator"].send("Failed to change the nickname of {} on death.".format(player.user.display_name))
+
                     # Return
                     return True
 
