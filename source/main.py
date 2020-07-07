@@ -839,13 +839,26 @@ async def clearchat(ctx, *args):
 
 @client.event
 async def on_reaction_add(reaction, user):
-    # Do nothing if the message wasn't from the bot OR if there is only 1 reaction (bot's reaction)
-    if not reaction.message.author.bot or reaction.count == 1:
+    # Do nothing if the message was from the bot
+    if user.bot:
         return
-    #await reaction.message.channel.send("Test")
 
     channel = reaction.message.channel
     global confirm_message, confirm_user
+
+    # ----------
+
+    # Stop dead players from reacting
+    try:
+        # Check if user is dead and if message is in meeting channel
+        if not players.Player_Manager.has_player_id(user.id) and reaction.message.channel.id == channels["meeting"].id:
+            await reaction.remove(user)
+
+    except:
+        None
+        #await reaction.message.channel.send("Error: {}".format(e))
+
+    # ----------
 
     # Start confirmation
     if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
