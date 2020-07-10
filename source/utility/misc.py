@@ -3,6 +3,7 @@ import discord
 import sys
 sys.path.append('source/data')
 from dictionaries import channels
+from enums import Game_Phase
 
 async def get_dm_channel(user):
     channel = user.dm_channel
@@ -43,3 +44,6 @@ def ordinalize(number):
         return "{}rd".format(number)
     else:
         return "{}th".format(number)
+
+def game_in_progress(game_phase):
+    return game_phase >= Game_Phase.Morning and game_phase <= Game_Phase.Night

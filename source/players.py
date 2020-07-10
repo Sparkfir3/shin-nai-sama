@@ -298,8 +298,9 @@ class Player_Manager(object):
         count = len(cls.players)
         wolf_count = int(count / 4)
 
-        # TODO - adjusting badger chance depending on wolf-human ratio
-        have_badger = random.randint(1, 100) < 50
+        # Optional - adjusting badger chance depending on wolf-human ratio
+        # have_badger = random.randint(1, 100) < 50 - DEPRECTAED: Badger is now 100% chance instead of 50%
+        have_badger = True
 
         players = []
         for player in cls.players:
