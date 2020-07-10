@@ -9,16 +9,10 @@ import players
 
 def check_perms(ctx, level = Perm_Level.Admin):
     # Admin level
-    if level == Perm_Level.Admin:
-        id = discord.utils.get(ctx.guild.roles, name="Gamemasters")
-        if id in ctx.author.roles:
-            return True
-        return False
-
-    # Moderator level
-    elif level == Perm_Level.Moderator:
-        id = discord.utils.get(ctx.guild.roles, name="Moderator")
-        if id in ctx.author.roles:
+    if level == Perm_Level.Admin or level == Perm_Level.Moderator: # Difference between Admin and Moderator is deprecated
+        id1 = discord.utils.get(ctx.guild.roles, name="Gamemasters")
+        id2 = discord.utils.get(ctx.guild.roles, name="Moderator")
+        if id1 in ctx.author.roles or id2 in ctx.author.roles:
             return True
         return False
 

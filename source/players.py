@@ -203,7 +203,7 @@ class Player_Manager(object):
                         if wolf.id == user_id:
                             cls.wolves.remove(wolf)
                             await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
-                            await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = True, speak = False)
+                            await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = False, speak = False)
                             break
 
                     # Set channel permissions
@@ -215,6 +215,13 @@ class Player_Manager(object):
                         None
 
                     await channels["dead"].set_permissions(player.user, read_messages = True, send_messages = True)
+
+                    # Change nickname
+                    try:
+                        await player.user.edit(nick = "死 {}".format(player.user.display_name))
+
+                    except:
+                        await channels["moderator"].send("Failed to change the nickname of {} on death.".format(player.user.display_name))
 
                     # Return
                     return True
@@ -291,8 +298,9 @@ class Player_Manager(object):
         count = len(cls.players)
         wolf_count = int(count / 4)
 
-        # TODO - adjusting badger chance depending on wolf-human ratio
-        have_badger = random.randint(1, 100) < 50
+        # Optional - adjusting badger chance depending on wolf-human ratio
+        # have_badger = random.randint(1, 100) < 50 - DEPRECTAED: Badger is now 100% chance instead of 50%
+        have_badger = True
 
         players = []
         for player in cls.players:

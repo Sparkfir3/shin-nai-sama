@@ -66,6 +66,7 @@ async def help(ctx):
         embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Commands", description = description)
 
         description = "\n" + "`$time` - Checks the current time remaining in the day."
+        description += "\n" + "`$spectate` - Spectate the game."
         embed.add_field(name = "In-Game Commands", value = description, inline = False)
 
         description = "\n" + "`$help` - Lists all available bot comamnds."
@@ -79,40 +80,40 @@ async def help(ctx):
             description = "`$gettingstarted` - Provides information on how to use the bot."
             embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Moderator Commands", description = description)
 
-            description = "`$add` - Adds all given mentioned players to the game."
-            description += "\n" + "`$remove` - Removes all given mentioned players from the game."
-            description += "\n" + "`$listplayers` - Lists all players currently in the game. Use `$help listplayers` for more info."
-            description += "\n" + "`$clearplayers` - Removes all players from the game."
+            description = "`$add` - Adds all given mentioned players to the game. \
+                \n`$remove` - Removes all given mentioned players from the game. \
+                \n`$listplayers` - Lists all players currently in the game. Use `$help listplayers` for more info. \
+                \n`$clearplayers` - Removes all players from the game."
             embed.add_field(name = "Player Management", value = description, inline = False)
 
-            description = "`$channel` - Sets up the channels for the game. Use `$help channel` for more info."
-            description += "\n" + "`$storechannels` - Stores the channels into a text document for later use."
-            description += "\n" + "`$loadchannels` - Loads the stored channels from the text document for use."
-            description += "\n" + "`$listchannels` - Lists all the channels used for the game and their assigned channels."
+            description = "`$channel` - Sets up the channels for the game. Use `$help channel` for more info. \
+                \n`$storechannels` - Stores the channels into a text document for later use. \
+                \n`$loadchannels` - Loads the stored channels from the text document for use. \
+                \n`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "`$start` - Starts the game."
-            description += "\n" + "`$next` - Skips to the next phase of the game, if possible."
-            description += "\n" + "`$end` - Forcefully ends the game. Players remain in the game, with their roles."
-            description += "\n" + "`$reset` - Forcefully ends and resets the game. Removes all players from the game."
+            description = "`$start` - Starts the game. \
+                \n`$next` - Skips to the next phase of the game, if possible. \
+                \n`$end` - Forcefully ends the game. Players remain in the game, with their roles. \
+                \n`$reset` - Forcefully ends and resets the game. Removes all players from the game."
             embed.add_field(name = "Game Management", value = description, inline = False)
 
-            description = "`$kill` - Kills the given player. Can only kill 1 player at a time."
-            description += "\n" + "`$pause` - Pauses the game timer."
+            description = "`$kill` - Kills the given player. Can only kill 1 player at a time. \
+                \n`$pause` - Pause/unpauses the game timer."
             embed.add_field(name = "Running the Game", value = description, inline = False)
 
-            description = "`$timer` - Starts a timer for a specified amount of minutes."
-            description += "\n" + "`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100."
+            description = "`$timer` - Starts a timer for a specified amount of minutes. \
+                \n`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100."
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
             await ctx.send(embed = embed)
 
             # Dev commands
             if ctx.author.id == 221115928933302272:
-                description = "`$test` - Test command for testing purposes."
-                description += "\n" + "`$bypasslimit` - Toggles the player limit of 12 for the game on and off."
-                description += "\n" + "`$allowdupes` - Toggles whether or not duplicate players are allowed."
-                description += "\n" + "`$quickstart` - Quickly sets up the game for testing."
+                description = "`$test` - Test command for testing purposes. \
+                    \n`$bypasslimit` - Toggles the player limit of 12 for the game on and off. \
+                    \n`$allowdupes` - Toggles whether or not duplicate players are allowed. \
+                    \n`$quickstart` - Quickly sets up the game for testing."
 
                 embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Dev Commands", description = description)
                 await ctx.send(embed = embed)
@@ -122,25 +123,24 @@ async def gettingstarted(ctx):
     await asyncio.sleep(0.1)
 
     if check_perms(ctx):
-        description = "To start, you first must set up the channels for the game. See `$help channels` for more information."
-        description += "To check if the channels have already been setup, use the `$listchannels` command."
-
-        description += "\n\nTo add players to the game, use the `$add` command, followed by mentions of the players you wish to add."
-        description += "\n\nOnce all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles."
+        description = "To start, you first must set up the channels for the game. See `$help channels` for more information. \
+            To check if the channels have already been setup, use the `$listchannels` command. \
+            \
+            \n\nTo add players to the game, use the `$add` command, followed by mentions of the players you wish to add. \
+            \n\nOnce all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles and set everything up."
         embed = discord.Embed(color = 0x555555, title = "Getting Started with Shin'nai-sama", description = description)
 
         # -----
 
-        description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels."
-        description += "\nYou can use the `$next` command to manually skip a phase, if you wish."
-        description += "\nUse the `$kill` command to kill off players."
-        description += "\nThe `$end` command will forcefully quit the game."
+        description = "Once the game is started, a timer will automatically run each phase of the game and open and close channels. \
+            \nYou can use the `$next` command to manually skip a phase, if you wish. \
+            \nUse the `$kill` command to kill off players. \
+            \nThe `$end` command will forcefully quit the game. This is important, as the game *will not automatically end itself*."
         embed.add_field(name = "Running the Game", value = description, inline = False)
 
         # -----
 
-        description = "Additionally, there is a `$poll` command that players can use to start polls."
-        description += "\nThere is also a `$timer` command for moderators to use to create manual timers if needed."
+        description = "There is a `$poll` command that players can use to start polls, and a `$timer` command for moderators to use to create manual timers if needed."
         embed.add_field(name = "Miscallaneous", value = description, inline = False)
 
         await ctx.send(embed = embed)
@@ -204,24 +204,26 @@ async def quickstart(ctx):
 @help.command(pass_context = True, aliases = ["channels"])
 async def channel(ctx):
     await asyncio.sleep(0.1)
+    embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $channel", description = "")
 
-    description = "Text Channels:\n`$channel <channel_name> <channel_mention>`"
-    description += "\nSets up the specified text channel as the channel mentioned.\nValid channel names are:"
-    description += "\n • moderator"
-    description += "\n • meeting"
-    description += "\n • snake"
-    description += "\n • spider"
-    description += "\n • wolves"
-    description += "\n • dead"
+    description = "`$channel <channel_name> <channel_mention>` \
+    \nSets up the specified text channel as the channel mentioned.\nValid channel names are: \
+    \n • moderator \
+    \n • meeting \
+    \n • snake \
+    \n • spider \
+    \n • wolves \
+    \n • dead"
+    embed.add_field(name = "Text Channels", value = description, inline = False)
 
-    description += "\n\nVoice Channels:\n`$channel voice <channel_name> <channel_mention>`"
-    description += "\nSets up the specified voice channel as the channel mentioned.\nValid channel names are:"
-    description += "\n • meeting"
-    description += "\n • wolves"
-    description += "\nTo mention a voice channel, use the format `<#channel_id>`, where `channel_id` is the id number of the channel. "
-    description += "To access the id of a channel, you must be in Discord's development mode."
+    description = "\n`$channel voice <channel_name> <channel_mention>` \
+    \nSets up the specified voice channel as the channel mentioned.\nValid channel names are: \
+    \n • meeting \
+    \n • wolves \
+    \nTo mention a voice channel, use the format `<#channel_id>`, where `channel_id` is the ID number of the channel.  \
+    To access and copy the ID of a channel, you must be in Discord's developer mode."
+    embed.add_field(name = "Voice Channels", value = description, inline = False)
 
-    embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $channel", description = description)
     await ctx.send(embed = embed)
 
 @client.command(pass_context = True, aliases = ["channels"])
@@ -472,14 +474,14 @@ async def clearplayers(ctx):
 async def listplayers(ctx):
     await asyncio.sleep(0.1)
 
-    description = "`$listplayers`"
-    description += "\nLists all players currently assigned to the game."
-
-    description += "\n\n`$listplayers mention`"
-    description += "\nMentions all players currently assigned to the game. Requires administrator-level permissions."
-
-    description += "\n\n`$listplayers roles`"
-    description += "\nLists all players currently assigned to the game with their roles. Requires moderator-level permissions."
+    description = "`$listplayers` \
+    \nLists all players currently assigned to the game. Separates between alive and dead players. \
+    \
+    \n\n`$listplayers mention` \
+    \nMentions all players currently assigned to the game. Requires administrator-level permissions. \
+    \n\n`$listplayers roles` \
+    \
+    \nLists all players currently assigned to the game with their roles. Requires administrator-level permissions."
 
     embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $listplayers", description = description)
     await ctx.send(embed = embed)
@@ -562,34 +564,18 @@ async def start(ctx):
 
 # ---------------------------------------------------------------------------------------
 
-# TODO - morning
-
-# ---------------------------------------------------------------------------------------
-
-# TODO - start and end day phase
-
-# ---------------------------------------------------------------------------------------
-
 # TODO - lynching
-
-# ---------------------------------------------------------------------------------------
-
-# TODO - start and end evening
-
-# ---------------------------------------------------------------------------------------
-
-# TODO - start and end night
 
 # ---------------------------------------------------------------------------------------
 
 # TODO - kill players & yeet command
 
-@client.command(pass_context = True)
+@client.command(pass_context = True, aliases = ["yeet"])
 async def kill(ctx, *args):
     await asyncio.sleep(0.1)
 
     # Check if game is running or not
-    # if gameplay.game_phase <= Game_Phase.Starting or gameplay.game_phase == Game_Phase.Ending:
+    # if not misc.game_in_progress(gameplay.game_phase):
     #     description = "Cannot kill players if the game is not in progress."
     #     embed = discord.Embed(color = 0xff0000, title = "Cannot Kill Player", description = description)
     #     await ctx.send(embed = embed)
@@ -648,7 +634,7 @@ async def endgame(ctx):
     # Check permission
     if check_perms(ctx):
         # Cannot end game currently
-        if gameplay.game_phase <= 1 or gameplay.game_phase >= 6:
+        if not misc.game_in_progress(gameplay.game_phase):
             embed = discord.Embed(color = 0xff0000, title = "Failed to End Game", description = "The game is not in progress or is currently starting, and cannot be forcefully ended.")
             await ctx.send(embed = embed)
             return
@@ -725,7 +711,7 @@ async def time(ctx):
     await asyncio.sleep(0.1)
 
     # Day, Evening, or Night
-    if gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+    if gameplay.game_phase >= Game_Phase.Day and gameplay.game_phase <= Game_Phase.Night:
         # Warning if game is paused
         description = ""
         if gameplay.pause_timer:
@@ -758,6 +744,39 @@ async def time(ctx):
     else:
         description = "The game is not in progress, so the time remaining cannot be checked."
         embed = discord.Embed(color = 0xff0000, title = "Game Not In Progress", description = description)
+        await ctx.send(embed = embed)
+
+# ---------------------------------------------------------------------------------------
+
+@client.command(pass_context = True)
+async def spectate(ctx):
+    await asyncio.sleep(0.1)
+
+    # Check game in progress - Day, Evening, or Night
+    if gameplay.game_phase >= 3 and gameplay.game_phase <= 5:
+        # Check if active player
+        if players.Player_Manager.has_player_id(ctx.author.id, dead_players = False) or players.Player_Manager.has_player_id(ctx.author.id, dead_players = True):
+            embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Participating players cannot spectate the game.")
+            await ctx.send(embed = embed)
+
+        # Successfully spectate
+        try:
+            # Set permissions
+            await channels["meeting"].set_permissions(ctx.author, read_messages = True, send_messages = False)
+            await channels["voice_meeting"].set_permissions(ctx.author, view_channel = True, connect = True, speak = False)
+
+            # Change nickname
+            try:
+                await ctx.author.edit(nick = "見 {}".format(ctx.author.display_name))
+            except:
+                embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Spectating permissions set up, but failed to change user's nickname.")
+
+        # Error occured
+        except Exception as e:
+            embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "An error occured while trying to spectate:\n{}".format(e))
+
+    else:
+        embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Cannot spectate the game if it is not in progress.")
         await ctx.send(embed = embed)
 
 # ---------------------------------------------------------------------------------------
@@ -822,13 +841,26 @@ async def clearchat(ctx, *args):
 
 @client.event
 async def on_reaction_add(reaction, user):
-    # Do nothing if the message wasn't from the bot OR if there is only 1 reaction (bot's reaction)
-    if not reaction.message.author.bot or reaction.count == 1:
+    # Do nothing if the message was from the bot
+    if user.bot:
         return
-    #await reaction.message.channel.send("Test")
 
     channel = reaction.message.channel
     global confirm_message, confirm_user
+
+    # ----------
+
+    # Stop dead players from reacting
+    try:
+        # Check if game in progress, user is dead, and if message is in meeting channel
+        if misc.game_in_progress(gameplay.game_phase) and not players.Player_Manager.has_player_id(user.id) and reaction.message.channel.id == channels["meeting"].id:
+            await reaction.remove(user)
+
+    except:
+        None
+        #await reaction.message.channel.send("Error: {}".format(e))
+
+    # ----------
 
     # Start confirmation
     if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
@@ -898,11 +930,7 @@ async def test(ctx):
     await asyncio.sleep(0.1)
 
     try:
-        test = 10
-        await ctx.send(test)
-
-        test = "20"
-        await ctx.send(test)
+        await ctx.author.edit(nick = "死 {}".format(ctx.author.display_name))
 
     except Exception as e:
         await ctx.send("Error: {}".format(e))

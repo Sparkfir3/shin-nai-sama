@@ -113,6 +113,13 @@ async def continue_start(channel):
             dead_role = await get_dead_role()
             for player in players.Player_Manager.players:
                 await player.user.add_roles(participant_role)
+
+                # Fix player nicknames
+                try:
+                    await player.user.edit(nick = player.user.display_name.replace("死", "").replace("見", "").strip())
+                except:
+                    None
+
                 await asyncio.sleep(0.1)
 
             await channel.send("Setup complete. The first morning will start in 15 minutes.\nUse the `$next` command to skip the timer and start the first morning.")
@@ -130,7 +137,6 @@ async def continue_start(channel):
         await channel.send("**GAME IS STARTING**")
         await asyncio.sleep(2)
 
-        # TODO - force exit game using reset command
         # Run game
         global run_game
         run_game = True
@@ -349,16 +355,6 @@ async def evening():
 
     await channel.send(game_messages["evening_end"])
 
-    # Close channels
-    for player in players.Player_Manager.players:
-        await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
-        await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = False)
-
-    if players.Player_Manager.snake_alive():
-        await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
-    if players.Player_Manager.spider_alive():
-        await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
-
     # Kick players from VC
     for user in channels["voice_meeting"].members:
         # Kick alive players
@@ -369,13 +365,24 @@ async def evening():
         except Exception as e:
             await channels["moderator"].send("Error: {}".format(e))
 
-        # Unmute dead players
+    # Unmute dead players
+    for user in channels["voice_meeting"].members:
         try:
             if players.Player_Manager.has_player_id(user.id, dead_players = True):
-                await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True, speak = True)
+                await channels["voice_meeting"].set_permissions(user, view_channel = True, connect = True, speak = True)
                 await user.edit(mute = False)
         except:
             None
+
+    # Close channels
+    for player in players.Player_Manager.players:
+        await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
+        await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = False)
+
+    if players.Player_Manager.snake_alive():
+        await channels["snake"].set_permissions(players.Player_Manager.snake.user, read_messages = True, send_messages = False)
+    if players.Player_Manager.spider_alive():
+        await channels["spider"].set_permissions(players.Player_Manager.spider.user, read_messages = True, send_messages = False)
 
 async def night():
     global next_phase, game_phase, timer, second_count
