@@ -1,6 +1,10 @@
 import discord
 
 import sys
+
+sys.path.append("")
+from settings import Settings
+
 sys.path.append('source/data')
 from enums import Player_Types
 from dictionaries import channels
@@ -298,9 +302,7 @@ class Player_Manager(object):
         count = len(cls.players)
         wolf_count = int(count / 4)
 
-        # Optional - adjusting badger chance depending on wolf-human ratio
-        # have_badger = random.randint(1, 100) < 50 - DEPRECTAED: Badger is now 100% chance instead of 50%
-        have_badger = True
+        have_badger = random.randint(1, 100) < Settings.badger_chance
 
         players = []
         for player in cls.players:
@@ -324,10 +326,11 @@ class Player_Manager(object):
             players[-1].type = Player_Types.Crow
             cls.crow = players.pop()
 
-            for i in range(2):
-                players[-1].type = Player_Types.Monkey
-                cls.monkeys_all.append(players[-1])
-                cls.monkeys.append(players.pop())
+            if Settings.monkeys_enabled:
+                for i in range(2):
+                    players[-1].type = Player_Types.Monkey
+                    cls.monkeys_all.append(players[-1])
+                    cls.monkeys.append(players.pop())
 
             # Badger
             if have_badger:

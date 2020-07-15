@@ -10,6 +10,7 @@ import asyncio
 sys.path.append("")
 from settings import TOKEN
 from settings import DEVMODE
+from settings import Settings
 
 # Import main modules
 import players
@@ -92,7 +93,8 @@ async def help(ctx):
                 \n`$listchannels` - Lists all the channels used for the game and their assigned channels."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "`$start` - Starts the game. \
+            description = "`$settings` - Displays and sets up settings for the game. Use `$help settings` for more info. \
+                \n`$start` - Starts the game. \
                 \n`$next` - Skips to the next phase of the game, if possible. \
                 \n`$end` - Forcefully ends the game. Players remain in the game, with their roles. \
                 \n`$reset` - Forcefully ends and resets the game. Removes all players from the game."
@@ -191,12 +193,87 @@ async def quickstart(ctx):
             await asyncio.sleep(0.1)
             if len(ctx.message.mentions) > 0:
                 await asyncio.sleep(0.1)
-                for i in range(20):
+                for i in range(8):
                     await addplayer(ctx)
 
             await asyncio.sleep(0.5)
 
         await start(ctx)
+
+# ---------------------------------------------------------------------------------------
+
+# Settings - Help
+@help.command(pass_context = True, aliases = ["setting"])
+async def settings(ctx):
+    await asyncio.sleep(0.1)
+
+    description = "Displays and sets up various settings for the game."
+    embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $settings", description = description)
+
+    description = "`$settings badger <value>` \
+    \nSets the chance of the badger appearing. `<value>` must be a number between 0 and 100, inclusive."
+    embed.add_field(name = "Badger", value = description, inline = False)
+
+    description = "`$settings monkey <value>` \
+    \nToggles whether or not the monkeys appear. `<value>` must be either \"true\" or \"false\"."
+    embed.add_field(name = "Monkeys", value = description, inline = False)
+
+    await ctx.send(embed = embed)
+
+
+# Settings - Display
+@client.group(pass_context = True, aliases = ["setting"])
+async def settings(ctx):
+    await asyncio.sleep(0.1)
+
+    if ctx.invoked_subcommand is None:
+        await ctx.send(embed = Settings.get_settings_embed())
+
+# Settings - Set
+@settings.command(pass_context = True)
+async def badger(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if(check_perms(ctx)):
+        try:
+            value = int(args[0])
+            if value >= 0 and value <= 100:
+                Settings.badger_chance = value
+                await ctx.send("Badger chance set to {}%".format(value))
+
+        except:
+            await ctx.send("Please enter a valid argument: a number between 0 and 100, inclusive.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
+@settings.command(pass_context = True, aliases = ["monkeys"])
+async def monkey(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if(check_perms(ctx)):
+        try:
+            if args[0].lower() == "true":
+                Settings.monkeys_enabled = True
+                await ctx.send("Monkeys have been enabled.")
+
+            elif args[0].lower() == "false":
+                Settings.monkeys_enabled = False
+                await ctx.send("Monkeys have been disabled.")
+
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either \"true\" or \"false\".")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
 
 # ---------------------------------------------------------------------------------------
 
@@ -539,7 +616,7 @@ async def start(ctx):
         global bypass_player_limit
 
         # Valid number of players
-        if number_of_players >= 12:
+        if number_of_players >= Settings.get_min_player_count():
             embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirmations.confirm_game_start(ctx, embed)
 
@@ -555,7 +632,7 @@ async def start(ctx):
 
         # Not enough players
         else:
-            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "There are only {} out of the minimum of 12 players required for the game:\n\n{}".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
+            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "There are only {} out of the minimum of {} players required for the game:\n\n{}".format(number_of_players, players.Player_Manager.list_players_raw(mention = True), Settings.get_min_player_count()))
             await ctx.send(embed = embed)
     
     # Insufficient permission

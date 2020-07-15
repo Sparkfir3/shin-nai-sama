@@ -4,6 +4,10 @@ import players
 
 import asyncio
 import sys
+
+sys.path.append("")
+from settings import Settings
+
 sys.path.append('source/data')
 from dictionaries import channels
 from dictionaries import start_role_messages
@@ -48,7 +52,7 @@ async def on_start(user, fallback_channel):
         return
 
     # Throw error if not enough players
-    if len(players.Player_Manager.players) < 7:
+    if len(players.Player_Manager.players) < Settings.get_min_player_count():
         embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There are not enough players to properly run the game without errors. Failed to start the game.")
         await fallback_channel.send(embed = embed)
         return
