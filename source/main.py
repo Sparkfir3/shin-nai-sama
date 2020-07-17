@@ -88,9 +88,7 @@ async def help(ctx):
             embed.add_field(name = "Player Management", value = description, inline = False)
 
             description = "`$channel` - Sets up the channels for the game. Use `$help channel` for more info. \
-                \n`$storechannels` - Stores the channels into a text document for later use. \
-                \n`$loadchannels` - Loads the stored channels from the text document for use. \
-                \n`$listchannels` - Lists all the channels used for the game and their assigned channels."
+                \n`$storechannels` - Stores the channels into a text document for later use."
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
             description = "`$settings` - Displays and sets up settings for the game. Use `$help settings` for more info. \
@@ -110,9 +108,11 @@ async def help(ctx):
 
             await ctx.send(embed = embed)
 
-            # Dev commands
+            # Dev commands - only displays for developer
             if ctx.author.id == 221115928933302272:
                 description = "`$test` - Test command for testing purposes. \
+                    \n`$loadchannels` - Loads the stored channels from the text document for use. \
+                    \n`$listchannels` - Lists all the channels used for the game and their assigned channels. \
                     \n`$bypasslimit` - Toggles the player limit of 12 for the game on and off. \
                     \n`$allowdupes` - Toggles whether or not duplicate players are allowed. \
                     \n`$quickstart` - Quickly sets up the game for testing."
@@ -220,7 +220,6 @@ async def settings(ctx):
 
     await ctx.send(embed = embed)
 
-
 # Settings - Display
 @client.group(pass_context = True, aliases = ["setting"])
 async def settings(ctx):
@@ -235,7 +234,7 @@ async def badger(ctx, *args):
     await asyncio.sleep(0.1)
 
     # Check permissions
-    if(check_perms(ctx)):
+    if check_perms(ctx):
         try:
             value = int(args[0])
             if value >= 0 and value <= 100:
@@ -254,7 +253,7 @@ async def monkey(ctx, *args):
     await asyncio.sleep(0.1)
 
     # Check permissions
-    if(check_perms(ctx)):
+    if check_perms(ctx):
         try:
             if args[0].lower() == "true":
                 Settings.monkeys_enabled = True
@@ -273,7 +272,6 @@ async def monkey(ctx, *args):
     # Invalid permission
     else:
         await insufficient_perms(ctx)
-
 
 # ---------------------------------------------------------------------------------------
 
@@ -577,7 +575,7 @@ async def listplayers(ctx, *args):
 
         # List with roles
         elif args[0].lower() == "roles" or args[0].lower() == "role":
-            if check_perms(ctx, Perm_Level.Moderator):
+            if check_perms(ctx):
                 await ctx.send(embed = players.Player_Manager.list_players_with_roles())
             else:
                 await insufficient_perms(ctx)
@@ -898,7 +896,7 @@ async def clearchat(ctx, *args):
     await asyncio.sleep(0.1)
 
     # Check permissions
-    if check_perms(ctx):
+    if check_perms(ctx, Perm_Level.Admin):
         # Get amount
         amount = 100
         try:

@@ -475,8 +475,10 @@ def get_day_length():
         return 25
     elif player_count >= 12:
         return 20
-    else:
+    elif player_count >= 8:
         return 15
+    else:
+        return 10
 
 # ---------------------------------------------------------------------------------
 
