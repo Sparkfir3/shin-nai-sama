@@ -299,9 +299,7 @@ class Player_Manager(object):
     # Start game
     @classmethod
     def distribute_roles(cls):
-        count = len(cls.players)
-        wolf_count = int(count / 4)
-
+        wolf_count = cls.get_wolf_count()
         have_badger = random.randint(1, 100) < Settings.badger_chance
 
         players = []
@@ -347,6 +345,10 @@ class Player_Manager(object):
             print("Error - not enough players to fully distribute roles.")
             return False
         return True
+
+    @classmethod
+    def get_wolf_count(cls):
+        return max(1, int(len(cls.players) / 4)) if Settings.wolf_count == 0 else Settings.wolf_count
 
     # -------------------------------------------
 

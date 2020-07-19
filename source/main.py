@@ -210,12 +210,16 @@ async def settings(ctx):
     description = "Displays and sets up various settings for the game."
     embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $settings", description = description)
 
+    description = "`$settings wolf <value>` \
+    \nSets the number of wolves that will appear. `<value>` must be either auto` or a positive number. `auto` sets the wolf count to 1 for every 4 players, rounded down."
+    embed.add_field(name = "Badger", value = description, inline = False)
+
     description = "`$settings badger <value>` \
     \nSets the chance of the badger appearing. `<value>` must be a number between 0 and 100, inclusive."
     embed.add_field(name = "Badger", value = description, inline = False)
 
     description = "`$settings monkey <value>` \
-    \nToggles whether or not the monkeys appear. `<value>` must be either \"true\" or \"false\"."
+    \nToggles whether or not the monkeys appear. `<value>` must be either `true` or `false`."
     embed.add_field(name = "Monkeys", value = description, inline = False)
 
     await ctx.send(embed = embed)
@@ -229,6 +233,39 @@ async def settings(ctx):
         await ctx.send(embed = Settings.get_settings_embed())
 
 # Settings - Set
+@settings.command(pass_context = True, aliases = ["wolf"])
+async def wolves(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        try:
+            value = args[0]
+
+            # Check "auto"
+            try:
+                if value.lower() == "auto" or value.lower() == "automatic":
+                    Settings.wolf_count = 0
+                    await ctx.send("Wolf count set to automatic (1 per 4 players).")
+                    return
+            except:
+                None
+            
+            # Set value
+            value = int(value[0])
+            if value > 0:
+                Settings.wolf_count = value
+                await ctx.send("Wolf count set to {}.".format(value))
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either `auto` or a positive number.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
 @settings.command(pass_context = True)
 async def badger(ctx, *args):
     await asyncio.sleep(0.1)
@@ -240,6 +277,9 @@ async def badger(ctx, *args):
             if value >= 0 and value <= 100:
                 Settings.badger_chance = value
                 await ctx.send("Badger chance set to {}%".format(value))
+
+            else:
+                raise Exception("Invalid argument.") 
 
         except:
             await ctx.send("Please enter a valid argument: a number between 0 and 100, inclusive.")
