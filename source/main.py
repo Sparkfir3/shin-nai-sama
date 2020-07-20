@@ -977,66 +977,70 @@ async def on_reaction_add(reaction, user):
 
     # ----------
 
-    # Start confirmation
-    if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["start"] = None
-            await gameplay.on_start(user, reaction.message.channel)
+    try:
+        # Start confirmation
+        if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["start"] = None
+                await gameplay.on_start(user, reaction.message.channel)
 
-        elif reaction.emoji == '❌':
-            confirm_message["start"] = None
-            embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
-            await channel.send(embed = embed)
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["start"] = None
+                embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+                await channel.send(embed = embed)
+            return
 
-    # Role distribution confirmation
-    if confirm_message["roles"] != None and reaction.message.id == confirm_message["roles"].id and confirm_user["roles"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["roles"] = None
-            await gameplay.continue_start(reaction.message.channel)
+        # Role distribution confirmation
+        if confirm_message["roles"] != None and reaction.message.id == confirm_message["roles"].id and confirm_user["roles"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["roles"] = None
+                await gameplay.continue_start(reaction.message.channel)
 
-        elif reaction.emoji == '❌':
-            confirm_message["roles"] = None
-            await gameplay.on_reset()
-            embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
-            await channel.send(embed = embed)
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["roles"] = None
+                await gameplay.on_reset()
+                embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+                await channel.send(embed = embed)
+            return
 
-    # Clear chat confirmation
-    if confirm_message["clear_chat"] != None and reaction.message.id == confirm_message["clear_chat"].id and confirm_user["clear_chat"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["clear_chat"] = True
+        # Clear chat confirmation
+        if confirm_message["clear_chat"] != None and reaction.message.id == confirm_message["clear_chat"].id and confirm_user["clear_chat"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["clear_chat"] = True
 
-        elif reaction.emoji == '❌':
-            confirm_message["clear_chat"] = None
-            await channel.send("Clear chat cancelled.")
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["clear_chat"] = None
+                await channel.send("Clear chat cancelled.")
+            return
 
-    # End game confirmation
-    if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["end_game"] = None
+        # End game confirmation
+        if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["end_game"] = None
 
-            gameplay.run_game = False
-            await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
+                gameplay.run_game = False
+                await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
 
-        elif reaction.emoji == '❌':
-            confirm_message["end_game"] = None
-            await channel.send("Force ending of game cancelled.")
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["end_game"] = None
+                await channel.send("Force ending of game cancelled.")
+            return
 
-    # Reset game confirmation
-    if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["reset_game"] = None
+        # Reset game confirmation
+        if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["reset_game"] = None
 
-            gameplay.run_game = False
-            await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
+                gameplay.run_game = False
+                await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
 
-        elif reaction.emoji == '❌':
-            confirm_message["reset_game"] = None
-            await channel.send("Reset game cancelled.")
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["reset_game"] = None
+                await channel.send("Reset game cancelled.")
+            return
+
+    except Exception as e:
+        print("An error occured in on_reaction_add: {}".format(e))
 
 # ---------------------------------------------------------------------------------------
 
