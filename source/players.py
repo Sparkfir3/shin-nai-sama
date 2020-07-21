@@ -17,7 +17,9 @@ class Player(object):
     def __init__(self, user_data, player_type):
         self._user = user_data
         self._type = player_type
-        self._death_message = "Alive"
+        self._death_message = None
+
+    # -------------------------------------------
 
     # Getters
     @property
@@ -33,6 +35,10 @@ class Player(object):
         return "{}#{}".format(self.user.name.replace("@", ""), self.user.discriminator)
 
     @property
+    def display_name(self):
+        return self.user.display_name
+
+    @property
     def type(self):
         return self._type
 
@@ -42,7 +48,9 @@ class Player(object):
 
     @property
     def is_dead(self):
-        return self._death_message == "Alive"
+        return self._death_message == None
+
+    # -------------------------------------------
 
     # Setters
     @type.setter
@@ -53,12 +61,14 @@ class Player(object):
     def death(self, new_string):
         self._type = new_string
 
+    # -------------------------------------------
+    
     # Other
     def is_human(self):
-        return type <= 5
+        return type <= Player_Types.Badger
 
     def on_wolf_side(self):
-        return type >= 5
+        return type >= Player_Types.Badger
 
     def role_to_string(self):
         if self.type == Player_Types.Human:

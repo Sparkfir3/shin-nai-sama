@@ -74,9 +74,9 @@ async def on_start(user, fallback_channel):
         message = await fallback_channel.send("Roles have been distributed, and have been privately sent to {}. Are you okay with this role distribution? You have 5 minutes to confirm this distribution.".format(user.display_name))
         await confirmations.confirm_roles(fallback_channel, message, user)
 
-    except Exception as inst:
+    except Exception as e:
         await on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}\n\nThe game has been reset.".format(inst))
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}\n\nThe game has been reset.".format(e))
         await fallback_channel.send(embed = embed)
 
 # Called after user confirms role distribution
@@ -485,16 +485,18 @@ async def timer_warning(channel, timer, phase = "day"):
 
 def get_day_length():
     player_count = len(players.Player_Manager.players)
-    if player_count >= 20:
-        return 30
-    elif player_count >= 16:
-        return 25
-    elif player_count >= 12:
-        return 20
-    elif player_count >= 8:
-        return 15
+    if player_count <= 4:
+        return 5 # 1-4
+    elif player_count <= 8:
+        return 10 # 5-8
+    elif player_count <= 12:
+        return 15 # 9-12
+    elif player_count <= 16:
+        return 20 # 13-16
+    elif player_count <= 20:
+        return 25 # 17-20
     else:
-        return 10
+        return 30 # 21+
 
 # ---------------------------------------------------------------------------------
 
