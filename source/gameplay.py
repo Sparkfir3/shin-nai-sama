@@ -61,6 +61,9 @@ async def on_start(user, fallback_channel):
         global game_phase
         game_phase = Game_Phase.Starting
 
+        # Set moderator
+        players.Player_Manager.moderator = user
+
         # Distribute roles
         players.Player_Manager.distribute_roles()
         dm = await get_dm_channel(user)
@@ -97,6 +100,19 @@ async def continue_start(channel):
             await channels["dead"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["voice_meeting"].set_permissions(everyone, view_channel = False)
             await channels["voice_wolves"].set_permissions(everyone, view_channel = False)
+
+            # Set moderator's permissions
+            moderator = players.Player_Manager.moderator
+            for i in channels:
+                if "voice" in i: # Voice channels
+                    await channels[i].set_permissions(moderator, view_channel = True)
+                else: # Text channels
+                    await channels[i].set_permissions(moderator, read_messages = True, send_messages = True)
+            # Try to set moderator nickname
+            try:
+                await moderator.edit(nick = "!{}".format(moderator.display_name))
+            except:
+                None
 
             # Send start message
             meeting_hall = channels["meeting"]
@@ -518,6 +534,19 @@ async def on_reset(clear_player_list = False):
         await channels["voice_wolves"].edit(sync_permissions = True)
     except:
         None
+
+    # Fix user nicknames
+    # Moderator
+    try:
+        await players.Player_Manager.moderator.edit(nick = players.Player_Manager.moderator.display_name.replace("!", ""))
+    except:
+        None
+    # Players
+    for player in players.Player_Manager.players:
+        try:
+            await player.user.edit(nick = player.user.display_name.replace("死", "").replace("見", ""))
+        except:
+            None
 
     # Clear/reset player list
     if clear_player_list:

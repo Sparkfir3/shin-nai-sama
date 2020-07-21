@@ -81,6 +81,8 @@ class Player(object):
 
 # Class that stores players
 class Player_Manager(object):
+    moderator = None
+
     players = []
     players_dead = []
 
@@ -355,6 +357,8 @@ class Player_Manager(object):
     # Other
     @classmethod
     def reset(cls):
+        cls.moderator = None
+
         for player in cls.players_dead:
             cls.players.append(player)
         cls.players_dead = []
