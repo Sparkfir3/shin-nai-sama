@@ -28,7 +28,7 @@ class Settings:
 
     @classmethod
     def get_min_player_count(cls):
-        min = 4 # Snake, Spider, Crow, Wolf
+        min = 3 + (1 if cls.wolf_count == 0 else cls.wolf_count) # Snake, Spider, Crow, Wolf
         if cls.badger_chance > 0: # Badger
             min += 1
         if cls.monkeys_enabled: # Monkeys

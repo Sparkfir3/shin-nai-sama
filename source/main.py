@@ -252,7 +252,7 @@ async def wolves(ctx, *args):
                 None
             
             # Set value
-            value = int(value[0])
+            value = int(value)
             if value > 0:
                 Settings.wolf_count = value
                 await ctx.send("Wolf count set to {}.".format(value))
