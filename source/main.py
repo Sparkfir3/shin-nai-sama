@@ -10,6 +10,7 @@ import asyncio
 sys.path.append("")
 from settings import TOKEN
 from settings import DEVMODE
+from settings import Settings
 
 # Import main modules
 import players
@@ -61,16 +62,16 @@ async def help(ctx):
 
     if ctx.invoked_subcommand is None:
         # Regular commands
-        description = "\n" + "`$poll` - Starts a poll with the given text."
-        description += "\n" + "`$listplayers` - Lists all players currently in the game."
+        description = """`$poll` - Starts a poll with the given text.
+            `$listplayers` - Lists all players currently in the game."""
         embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Commands", description = description)
 
-        description = "\n" + "`$time` - Checks the current time remaining in the day."
-        description += "\n" + "`$spectate` - Spectate the game."
+        description = """`$time` - Checks the current time remaining in the day.
+            `$spectate` - Spectate the game."""
         embed.add_field(name = "In-Game Commands", value = description, inline = False)
 
-        description = "\n" + "`$help` - Lists all available bot comamnds."
-        description += "\n" + "`$ping` - Test command that gives the bot\'s latency time."
+        description = """`$help` - Lists all available bot comamnds.
+            `$ping` - Test command that gives the bot\'s latency time."""
         embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
         await ctx.send(embed = embed)
@@ -80,40 +81,41 @@ async def help(ctx):
             description = "`$gettingstarted` - Provides information on how to use the bot."
             embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Moderator Commands", description = description)
 
-            description = "`$add` - Adds all given mentioned players to the game. \
-                \n`$remove` - Removes all given mentioned players from the game. \
-                \n`$listplayers` - Lists all players currently in the game. Use `$help listplayers` for more info. \
-                \n`$clearplayers` - Removes all players from the game."
+            description = """`$add` - Adds all given mentioned players to the game.
+                `$remove` - Removes all given mentioned players from the game.
+                `$listplayers` - Lists all players currently in the game. Use `$help listplayers` for more info.
+                `$clearplayers` - Removes all players from the game."""
             embed.add_field(name = "Player Management", value = description, inline = False)
 
-            description = "`$channel` - Sets up the channels for the game. Use `$help channel` for more info. \
-                \n`$storechannels` - Stores the channels into a text document for later use. \
-                \n`$loadchannels` - Loads the stored channels from the text document for use. \
-                \n`$listchannels` - Lists all the channels used for the game and their assigned channels."
+            description = """`$channel` - Sets up the channels for the game. Use `$help channel` for more info.
+                `$listchannels` - Lists all the channels used for the game and their assigned channels."""
             embed.add_field(name = "Channel Management", value = description, inline = False)
 
-            description = "`$start` - Starts the game. \
-                \n`$next` - Skips to the next phase of the game, if possible. \
-                \n`$end` - Forcefully ends the game. Players remain in the game, with their roles. \
-                \n`$reset` - Forcefully ends and resets the game. Removes all players from the game."
+            description = """`$settings` - Displays and sets up settings for the game. Use `$help settings` for more info.
+                `$start` - Starts the game.
+                `$next` - Skips to the next phase of the game, if possible.
+                `$end` - Forcefully ends the game. Players remain in the game, with their roles.
+                `$reset` - Forcefully ends and resets the game. Removes all players from the game."""
             embed.add_field(name = "Game Management", value = description, inline = False)
 
-            description = "`$kill` - Kills the given player. Can only kill 1 player at a time. \
-                \n`$pause` - Pause/unpauses the game timer."
+            description = """`$kill` - Kills the given player.
+                `$pause` - Pause/unpauses the game timer."""
             embed.add_field(name = "Running the Game", value = description, inline = False)
 
-            description = "`$timer` - Starts a timer for a specified amount of minutes. \
-                \n`$clearchat` - Removes a specified number of messages from the channel. Defaults to 100."
+            description = """`$timer` - Starts a timer for a specified amount of minutes.
+                `$clearchat` - Removes a specified number of messages from the channel. Defaults to 100."""
             embed.add_field(name = "Miscellaneous", value = description, inline = False)
 
             await ctx.send(embed = embed)
 
-            # Dev commands
+            # Dev commands - only displays for developer
             if ctx.author.id == 221115928933302272:
-                description = "`$test` - Test command for testing purposes. \
-                    \n`$bypasslimit` - Toggles the player limit of 12 for the game on and off. \
-                    \n`$allowdupes` - Toggles whether or not duplicate players are allowed. \
-                    \n`$quickstart` - Quickly sets up the game for testing."
+                description = """`$test` - Test command for testing purposes.
+                    `$storechannels` - Stores the channels into a text document for later use.
+                    `$loadchannels` - Loads the stored channels from the text document for use.
+                    `$bypasslimit` - Toggles the player limit of 12 for the game on and off.
+                    `$allowdupes` - Toggles whether or not duplicate players are allowed.
+                    `$quickstart` - Quickly sets up the game for testing."""
 
                 embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Dev Commands", description = description)
                 await ctx.send(embed = embed)
@@ -191,12 +193,125 @@ async def quickstart(ctx):
             await asyncio.sleep(0.1)
             if len(ctx.message.mentions) > 0:
                 await asyncio.sleep(0.1)
-                for i in range(20):
+                for i in range(8):
                     await addplayer(ctx)
 
             await asyncio.sleep(0.5)
 
         await start(ctx)
+
+# ---------------------------------------------------------------------------------------
+
+# Settings - Help
+@help.command(pass_context = True, aliases = ["setting"])
+async def settings(ctx):
+    await asyncio.sleep(0.1)
+
+    description = "Displays and sets up various settings for the game."
+    embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $settings", description = description)
+
+    description = "`$settings wolf <value>` \
+    \nSets the number of wolves that will appear. `<value>` must be either auto` or a positive number. `auto` sets the wolf count to 1 for every 4 players, rounded down."
+    embed.add_field(name = "Badger", value = description, inline = False)
+
+    description = "`$settings badger <value>` \
+    \nSets the chance of the badger appearing. `<value>` must be a number between 0 and 100, inclusive."
+    embed.add_field(name = "Badger", value = description, inline = False)
+
+    description = "`$settings monkey <value>` \
+    \nToggles whether or not the monkeys appear. `<value>` must be either `true` or `false`."
+    embed.add_field(name = "Monkeys", value = description, inline = False)
+
+    await ctx.send(embed = embed)
+
+# Settings - Display
+@client.group(pass_context = True, aliases = ["setting"])
+async def settings(ctx):
+    await asyncio.sleep(0.1)
+
+    if ctx.invoked_subcommand is None:
+        await ctx.send(embed = Settings.get_settings_embed())
+
+# Settings - Set
+@settings.command(pass_context = True, aliases = ["wolf"])
+async def wolves(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        try:
+            value = args[0]
+
+            # Check "auto"
+            try:
+                if value.lower() == "auto" or value.lower() == "automatic":
+                    Settings.wolf_count = 0
+                    await ctx.send("Wolf count set to automatic (1 per 4 players).")
+                    return
+            except:
+                None
+            
+            # Set value
+            value = int(value)
+            if value > 0:
+                Settings.wolf_count = value
+                await ctx.send("Wolf count set to {}.".format(value))
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either `auto` or a positive number.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
+@settings.command(pass_context = True)
+async def badger(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        try:
+            value = int(args[0])
+            if value >= 0 and value <= 100:
+                Settings.badger_chance = value
+                await ctx.send("Badger chance set to {}%".format(value))
+
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: a number between 0 and 100, inclusive.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
+@settings.command(pass_context = True, aliases = ["monkeys"])
+async def monkey(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        try:
+            if args[0].lower() == "true":
+                Settings.monkeys_enabled = True
+                await ctx.send("Monkeys have been enabled.")
+
+            elif args[0].lower() == "false":
+                Settings.monkeys_enabled = False
+                await ctx.send("Monkeys have been disabled.")
+
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either `true` or `false`.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
 
 # ---------------------------------------------------------------------------------------
 
@@ -500,7 +615,7 @@ async def listplayers(ctx, *args):
 
         # List with roles
         elif args[0].lower() == "roles" or args[0].lower() == "role":
-            if check_perms(ctx, Perm_Level.Moderator):
+            if check_perms(ctx):
                 await ctx.send(embed = players.Player_Manager.list_players_with_roles())
             else:
                 await insufficient_perms(ctx)
@@ -539,7 +654,7 @@ async def start(ctx):
         global bypass_player_limit
 
         # Valid number of players
-        if number_of_players >= 12:
+        if number_of_players >= Settings.get_min_player_count():
             embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirmations.confirm_game_start(ctx, embed)
 
@@ -555,7 +670,7 @@ async def start(ctx):
 
         # Not enough players
         else:
-            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "There are only {} out of the minimum of 12 players required for the game:\n\n{}".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
+            embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "There are only {} out of the minimum of {} players required for the game:\n\n{}".format(number_of_players, players.Player_Manager.list_players_raw(mention = True), Settings.get_min_player_count()))
             await ctx.send(embed = embed)
     
     # Insufficient permission
@@ -604,10 +719,6 @@ async def kill(ctx, *args):
     # Insufficient permission
     else:
         await insufficient_perms(ctx)
-
-# ---------------------------------------------------------------------------------------
-
-# TODO - end game
 
 # ---------------------------------------------------------------------------------------
 
@@ -769,11 +880,18 @@ async def spectate(ctx):
             try:
                 await ctx.author.edit(nick = "見 {}".format(ctx.author.display_name))
             except:
-                embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Spectating permissions set up, but failed to change user's nickname.")
+                embed = discord.Embed(color = 0x00ff00, title = "Spectator Setup", description = "Spectating permissions set up, but failed to change user's nickname.")
+                await ctx.send(embed = embed)
+                return
+
+            # Successful
+            embed = embed = discord.Embed(color = 0x00ff00, title = "Spectator Setup", description = "Spectating permissions set up successfully.")
+            await ctx.send(embed = embed)
 
         # Error occured
         except Exception as e:
             embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "An error occured while trying to spectate:\n{}".format(e))
+            await ctx.send(embed = embed)
 
     else:
         embed = discord.Embed(color = 0xff0000, title = "Cannot Spectate", description = "Cannot spectate the game if it is not in progress.")
@@ -821,7 +939,7 @@ async def clearchat(ctx, *args):
     await asyncio.sleep(0.1)
 
     # Check permissions
-    if check_perms(ctx):
+    if check_perms(ctx, Perm_Level.Admin):
         # Get amount
         amount = 100
         try:
@@ -862,66 +980,70 @@ async def on_reaction_add(reaction, user):
 
     # ----------
 
-    # Start confirmation
-    if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["start"] = None
-            await gameplay.on_start(user, reaction.message.channel)
+    try:
+        # Start confirmation
+        if confirm_message["start"] != None and reaction.message.id == confirm_message["start"].id and confirm_user["start"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["start"] = None
+                await gameplay.on_start(user, reaction.message.channel)
 
-        elif reaction.emoji == '❌':
-            confirm_message["start"] = None
-            embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
-            await channel.send(embed = embed)
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["start"] = None
+                embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+                await channel.send(embed = embed)
+            return
 
-    # Role distribution confirmation
-    if confirm_message["roles"] != None and reaction.message.id == confirm_message["roles"].id and confirm_user["roles"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["roles"] = None
-            await gameplay.continue_start(reaction.message.channel)
+        # Role distribution confirmation
+        if confirm_message["roles"] != None and reaction.message.id == confirm_message["roles"].id and confirm_user["roles"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["roles"] = None
+                await gameplay.continue_start(reaction.message.channel)
 
-        elif reaction.emoji == '❌':
-            confirm_message["roles"] = None
-            await gameplay.on_reset()
-            embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
-            await channel.send(embed = embed)
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["roles"] = None
+                await gameplay.on_reset()
+                embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+                await channel.send(embed = embed)
+            return
 
-    # Clear chat confirmation
-    if confirm_message["clear_chat"] != None and reaction.message.id == confirm_message["clear_chat"].id and confirm_user["clear_chat"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["clear_chat"] = True
+        # Clear chat confirmation
+        if confirm_message["clear_chat"] != None and reaction.message.id == confirm_message["clear_chat"].id and confirm_user["clear_chat"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["clear_chat"] = True
 
-        elif reaction.emoji == '❌':
-            confirm_message["clear_chat"] = None
-            await channel.send("Clear chat cancelled.")
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["clear_chat"] = None
+                await channel.send("Clear chat cancelled.")
+            return
 
-    # End game confirmation
-    if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["end_game"] = None
+        # End game confirmation
+        if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["end_game"] = None
 
-            gameplay.run_game = False
-            await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
+                gameplay.run_game = False
+                await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
 
-        elif reaction.emoji == '❌':
-            confirm_message["end_game"] = None
-            await channel.send("Force ending of game cancelled.")
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["end_game"] = None
+                await channel.send("Force ending of game cancelled.")
+            return
 
-    # Reset game confirmation
-    if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
-        if reaction.emoji == '✅':
-            confirm_message["reset_game"] = None
+        # Reset game confirmation
+        if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
+            if reaction.emoji == '✅':
+                confirm_message["reset_game"] = None
 
-            gameplay.run_game = False
-            await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
+                gameplay.run_game = False
+                await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
 
-        elif reaction.emoji == '❌':
-            confirm_message["reset_game"] = None
-            await channel.send("Reset game cancelled.")
-        return
+            elif reaction.emoji == '❌':
+                confirm_message["reset_game"] = None
+                await channel.send("Reset game cancelled.")
+            return
+
+    except Exception as e:
+        print("An error occured in on_reaction_add:\n{}".format(e))
 
 # ---------------------------------------------------------------------------------------
 
@@ -933,7 +1055,7 @@ async def test(ctx):
         await ctx.author.edit(nick = "死 {}".format(ctx.author.display_name))
 
     except Exception as e:
-        await ctx.send("Error: {}".format(e))
+        await ctx.send("Error:\n{}".format(e))
 
 # ---------------------------------------------------------------------------------------
 

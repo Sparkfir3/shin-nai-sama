@@ -4,6 +4,10 @@ import players
 
 import asyncio
 import sys
+
+sys.path.append("")
+from settings import Settings
+
 sys.path.append('source/data')
 from dictionaries import channels
 from dictionaries import start_role_messages
@@ -48,7 +52,7 @@ async def on_start(user, fallback_channel):
         return
 
     # Throw error if not enough players
-    if len(players.Player_Manager.players) < 7:
+    if len(players.Player_Manager.players) < Settings.get_min_player_count():
         embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There are not enough players to properly run the game without errors. Failed to start the game.")
         await fallback_channel.send(embed = embed)
         return
@@ -56,6 +60,9 @@ async def on_start(user, fallback_channel):
     try:
         global game_phase
         game_phase = Game_Phase.Starting
+
+        # Set moderator
+        players.Player_Manager.moderator = user
 
         # Distribute roles
         players.Player_Manager.distribute_roles()
@@ -67,9 +74,9 @@ async def on_start(user, fallback_channel):
         message = await fallback_channel.send("Roles have been distributed, and have been privately sent to {}. Are you okay with this role distribution? You have 5 minutes to confirm this distribution.".format(user.display_name))
         await confirmations.confirm_roles(fallback_channel, message, user)
 
-    except Exception as inst:
+    except Exception as e:
         await on_reset()
-        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}\n\nThe game has been reset.".format(inst))
+        embed = discord.Embed(color = 0xff0000, title = "Error in Starting Game", description = "There was an error in starting the game:\n{}\n\nThe game has been reset.".format(e))
         await fallback_channel.send(embed = embed)
 
 # Called after user confirms role distribution
@@ -93,6 +100,19 @@ async def continue_start(channel):
             await channels["dead"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["voice_meeting"].set_permissions(everyone, view_channel = False)
             await channels["voice_wolves"].set_permissions(everyone, view_channel = False)
+
+            # Set moderator's permissions
+            moderator = players.Player_Manager.moderator
+            for i in channels:
+                if "voice" in i: # Voice channels
+                    await channels[i].set_permissions(moderator, view_channel = True)
+                else: # Text channels
+                    await channels[i].set_permissions(moderator, read_messages = True, send_messages = True)
+            # Try to set moderator nickname
+            try:
+                await moderator.edit(nick = "!{}".format(moderator.display_name))
+            except:
+                None
 
             # Send start message
             meeting_hall = channels["meeting"]
@@ -465,14 +485,18 @@ async def timer_warning(channel, timer, phase = "day"):
 
 def get_day_length():
     player_count = len(players.Player_Manager.players)
-    if player_count >= 20:
-        return 30
-    elif player_count >= 16:
-        return 25
-    elif player_count >= 12:
-        return 20
+    if player_count <= 4:
+        return 5 # 1-4
+    elif player_count <= 8:
+        return 10 # 5-8
+    elif player_count <= 12:
+        return 15 # 9-12
+    elif player_count <= 16:
+        return 20 # 13-16
+    elif player_count <= 20:
+        return 25 # 17-20
     else:
-        return 15
+        return 30 # 21+
 
 # ---------------------------------------------------------------------------------
 
@@ -512,6 +536,19 @@ async def on_reset(clear_player_list = False):
         await channels["voice_wolves"].edit(sync_permissions = True)
     except:
         None
+
+    # Fix user nicknames
+    # Moderator
+    try:
+        await players.Player_Manager.moderator.edit(nick = players.Player_Manager.moderator.display_name.replace("!", ""))
+    except:
+        None
+    # Players
+    for player in players.Player_Manager.players:
+        try:
+            await player.user.edit(nick = player.user.display_name.replace("死", "").replace("見", ""))
+        except:
+            None
 
     # Clear/reset player list
     if clear_player_list:

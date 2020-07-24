@@ -1,6 +1,10 @@
 import discord
 
 import sys
+
+sys.path.append("")
+from settings import Settings
+
 sys.path.append('source/data')
 from enums import Player_Types
 from dictionaries import channels
@@ -13,7 +17,9 @@ class Player(object):
     def __init__(self, user_data, player_type):
         self._user = user_data
         self._type = player_type
-        self._death_message = "Alive"
+        self._death_message = None
+
+    # -------------------------------------------
 
     # Getters
     @property
@@ -29,6 +35,10 @@ class Player(object):
         return "{}#{}".format(self.user.name.replace("@", ""), self.user.discriminator)
 
     @property
+    def display_name(self):
+        return self.user.display_name
+
+    @property
     def type(self):
         return self._type
 
@@ -38,7 +48,9 @@ class Player(object):
 
     @property
     def is_dead(self):
-        return self._death_message == "Alive"
+        return self._death_message == None
+
+    # -------------------------------------------
 
     # Setters
     @type.setter
@@ -49,12 +61,14 @@ class Player(object):
     def death(self, new_string):
         self._type = new_string
 
+    # -------------------------------------------
+    
     # Other
     def is_human(self):
-        return type <= 5
+        return type <= Player_Types.Badger
 
     def on_wolf_side(self):
-        return type >= 5
+        return type >= Player_Types.Badger
 
     def role_to_string(self):
         if self.type == Player_Types.Human:
@@ -77,6 +91,8 @@ class Player(object):
 
 # Class that stores players
 class Player_Manager(object):
+    moderator = None
+
     players = []
     players_dead = []
 
@@ -202,12 +218,12 @@ class Player_Manager(object):
                     for wolf in cls.wolves:
                         if wolf.id == user_id:
                             cls.wolves.remove(wolf)
-                            await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False)
+                            await channels["wolves"].set_permissions(wolf.user, read_messages = True, send_messages = False, add_reactions = False)
                             await channels["voice_wolves"].set_permissions(wolf.user, view_channel = True, connect = False, speak = False)
                             break
 
                     # Set channel permissions
-                    await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False)
+                    await channels["meeting"].set_permissions(player.user, read_messages = True, send_messages = False, add_reactions = False)
                     try:
                         await channels["voice_meeting"].set_permissions(player.user, view_channel = True, connect = True, speak = False)
                         await player.user.edit(mute = True)
@@ -295,12 +311,8 @@ class Player_Manager(object):
     # Start game
     @classmethod
     def distribute_roles(cls):
-        count = len(cls.players)
-        wolf_count = int(count / 4)
-
-        # Optional - adjusting badger chance depending on wolf-human ratio
-        # have_badger = random.randint(1, 100) < 50 - DEPRECTAED: Badger is now 100% chance instead of 50%
-        have_badger = True
+        wolf_count = cls.get_wolf_count()
+        have_badger = random.randint(1, 100) < Settings.badger_chance
 
         players = []
         for player in cls.players:
@@ -324,10 +336,11 @@ class Player_Manager(object):
             players[-1].type = Player_Types.Crow
             cls.crow = players.pop()
 
-            for i in range(2):
-                players[-1].type = Player_Types.Monkey
-                cls.monkeys_all.append(players[-1])
-                cls.monkeys.append(players.pop())
+            if Settings.monkeys_enabled:
+                for i in range(2):
+                    players[-1].type = Player_Types.Monkey
+                    cls.monkeys_all.append(players[-1])
+                    cls.monkeys.append(players.pop())
 
             # Badger
             if have_badger:
@@ -345,11 +358,17 @@ class Player_Manager(object):
             return False
         return True
 
+    @classmethod
+    def get_wolf_count(cls):
+        return max(1, int(len(cls.players) / 4)) if Settings.wolf_count == 0 else Settings.wolf_count
+
     # -------------------------------------------
 
     # Other
     @classmethod
     def reset(cls):
+        cls.moderator = None
+
         for player in cls.players_dead:
             cls.players.append(player)
         cls.players_dead = []
