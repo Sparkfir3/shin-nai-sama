@@ -125,11 +125,14 @@ async def gettingstarted(ctx):
     await asyncio.sleep(0.1)
 
     if check_perms(ctx):
-        description = "To start, you first must set up the channels for the game. See `$help channels` for more information. \
-            To check if the channels have already been setup, use the `$listchannels` command. \
-            \
-            \n\nTo add players to the game, use the `$add` command, followed by mentions of the players you wish to add. \
-            \n\nOnce all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles and set everything up."
+        description = """To start, you first must set up the channels for the game. See `$help channels` for more information. \
+            To check if the channels have already been setup, use the `$listchannels` command.
+            
+            Before the game starts, you can use the `$settings` command to fiddle with the game settings. Use `$help settings` for more info.
+            
+            To add players to the game, use the `$add` command, followed by mentions of the players you wish to add.
+
+            Once all the desired players are added, use the `$start` command to start the game, which will automatically distribute roles and set everything up."""
         embed = discord.Embed(color = 0x555555, title = "Getting Started with Shin'nai-sama", description = description)
 
         # -----
