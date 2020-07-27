@@ -214,7 +214,7 @@ async def settings(ctx):
     embed = discord.Embed(color = 0x555555, title = "Shin'nai-sama Command - $settings", description = description)
 
     description = "`$settings wolf <value>` \
-    \nSets the number of wolves that will appear. `<value>` must be either auto` or a positive number. `auto` sets the wolf count to 1 for every 4 players, rounded down."
+    \nSets the number of wolves that will appear. `<value>` must be either `auto` or a positive number. `auto` sets the wolf count to 1 for every 4 players, rounded down."
     embed.add_field(name = "Badger", value = description, inline = False)
 
     description = "`$settings badger <value>` \

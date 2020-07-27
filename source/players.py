@@ -162,8 +162,9 @@ class Player_Manager(object):
         if len(cls.players) == 0:
             return "There are no players in the game to remove."
 
-        amount = len(cls.players)
+        amount = len(cls.players) + len(cls.players_dead)
         cls.players = []
+        cls.players_dead = []
         return "All {} players have been removed.".format(amount)
 
     @classmethod
@@ -253,7 +254,7 @@ class Player_Manager(object):
 
     # Listing players
     @classmethod
-    def list_players(cls):
+    def list_players(cls, roles = False):
         # No players
         if len(cls.players) == 0 and len(cls.players_dead) == 0:
             return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
@@ -263,13 +264,13 @@ class Player_Manager(object):
             # Alive
             description = "{} player{} alive:\n\n{}".format(len(cls.players), \
                 "s are" if len(cls.players) != 1 else " is", \
-                cls.list_players_raw(mention = True))
+                cls.list_players_raw(mention = True, role = roles))
             embed = discord.Embed(color = 0x00080ff, title = "List of Players", description = description)
 
             # Dead
             description = "{} player{} dead:\n\n{}".format(len(cls.players_dead), \
                 "s are" if len(cls.players_dead) != 1 else " is", \
-                cls.list_players_raw(mention = True, dead_players = True))
+                cls.list_players_raw(mention = True, role = roles, dead_players = True))
             embed.add_field(name = "Dead Players", value = description, inline = False)
 
             return embed
@@ -278,18 +279,18 @@ class Player_Manager(object):
         description = "There {} {} player{} in the game:\n\n{}".format("is" if len(cls.players) == 1 else "are", \
             len(cls.players), \
             "s" if len(cls.players) != 1 else "", \
-            cls.list_players_raw(mention = True))
+            cls.list_players_raw(mention = True, role = roles))
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = description)
 
     @classmethod
     def list_players_with_roles(cls):
-        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True, role = True))
+        return cls.list_players(roles = True)
 
     @classmethod
     def list_players_raw(cls, mention = False, role = False, dead_players = False):
         text = ""
         # No players
-        if len(cls.players) == 0:
+        if (dead_players and len(cls.players_dead) == 0) or len(cls.players) == 0:
             text = "No players are currently in the game."
         # Get players
         else:
