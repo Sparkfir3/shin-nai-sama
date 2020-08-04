@@ -9,6 +9,9 @@ sys.path.append('source/data')
 from enums import Player_Types
 from dictionaries import channels
 
+sys.path.append('source/utility')
+from misc import set_nickname
+
 import random
 from random import shuffle
 
@@ -235,7 +238,7 @@ class Player_Manager(object):
 
                     # Change nickname
                     try:
-                        await player.user.edit(nick = "死 {}".format(player.user.display_name))
+                        await set_nickname(player.user, dead = True)
 
                     except:
                         await channels["moderator"].send("Failed to change the nickname of {} on death.".format(player.user.display_name))

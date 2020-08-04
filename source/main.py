@@ -881,7 +881,7 @@ async def spectate(ctx):
 
             # Change nickname
             try:
-                await ctx.author.edit(nick = "見 {}".format(ctx.author.display_name))
+                await misc.set_nickname(ctx.author, spectate = True)
             except:
                 embed = discord.Embed(color = 0x00ff00, title = "Spectator Setup", description = "Spectating permissions set up, but failed to change user's nickname.")
                 await ctx.send(embed = embed)

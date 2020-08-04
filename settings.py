@@ -10,7 +10,7 @@ DEVMODE = os.getenv("DEVMODE")
 
 class Settings:
     wolf_count = 0
-    badger_chance = 50
+    badger_chance = 100
     monkeys_enabled = True
 
     @classmethod
