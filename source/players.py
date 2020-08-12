@@ -17,6 +17,7 @@ from random import shuffle
 
 # Stores information about each plater
 class Player(object):
+
     def __init__(self, user_data, player_type):
         self._user = user_data
         self._type = player_type
@@ -68,6 +69,9 @@ class Player(object):
     
     # Other
     def is_human(self):
+        return type <= Player_Types.Inu
+
+    def is_not_wolf(self):
         return type <= Player_Types.Badger
 
     def on_wolf_side(self):
@@ -84,6 +88,10 @@ class Player(object):
             return "Monkey"
         elif self.type == Player_Types.Crow:
             return "Crow"
+        elif self.type == Player_Types.Inu:
+            return "Shiba Inu"
+        elif self.type == Player_Types.Fox:
+            return "Fox"
         elif self.type == Player_Types.Badger:
             return "Badger"
         elif self.type == Player_Types.Wolf:
@@ -111,6 +119,10 @@ class Player_Manager(object):
 
     crow = None
     badger = None
+    inu = None
+
+    # Fox
+    fox = None
 
     # Wolves
     wolves_all = []
@@ -132,6 +144,14 @@ class Player_Manager(object):
     @classmethod
     def badger_alive(cls):
         return cls.badger != None
+
+    @classmethod
+    def inu_alive(cls):
+        return cls.inu != None
+
+    @classmethod
+    def fox_alive(cls):
+        return cls.fox != None
 
     # -------------------------------------------
 
@@ -337,9 +357,12 @@ class Player_Manager(object):
             players[-1].type = Player_Types.Spider
             cls.spider = players.pop()
 
-            players[-1].type = Player_Types.Crow
-            cls.crow = players.pop()
+            # Crow
+            if Settings.crow_enabled:
+                players[-1].type = Player_Types.Crow
+                cls.crow = players.pop()
 
+            # Monkeys
             if Settings.monkeys_enabled:
                 for i in range(2):
                     players[-1].type = Player_Types.Monkey
@@ -350,6 +373,15 @@ class Player_Manager(object):
             if have_badger:
                 players[-1].type = Player_Types.Badger
                 cls.badger = players.pop()
+                # Shiba Inu
+                if Settings.inu_enabled:
+                    players[-1].type = Player_Types.Inu
+                    cls.inu = players.pop()
+
+            # Fox
+            if Settings.fox_enabled:
+                players[-1].type = Player_Types.Fox
+                cls.fox = players.pop()
 
             # Regular humans
             for i in range(len(players)):

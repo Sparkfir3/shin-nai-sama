@@ -196,7 +196,7 @@ async def quickstart(ctx):
             await asyncio.sleep(0.1)
             if len(ctx.message.mentions) > 0:
                 await asyncio.sleep(0.1)
-                for i in range(8):
+                for i in range(12):
                     await addplayer(ctx)
 
             await asyncio.sleep(0.5)
@@ -224,6 +224,18 @@ async def settings(ctx):
     description = "`$settings monkey <value>` \
     \nToggles whether or not the monkeys appear. `<value>` must be either `true` or `false`."
     embed.add_field(name = "Monkeys", value = description, inline = False)
+
+    description = "`$settings crow <value>` \
+    \nToggles whether or not the crow will appear. `<value>` must be either `true` or `false`."
+    embed.add_field(name = "Crow", value = description, inline = False)
+
+    description = "`$settings inu <value>` \
+    \nToggles whether or not the shiba inu will appear. The shiba inu will only appear if the badger also appears. `<value>` must be either `true` or `false`."
+    embed.add_field(name = "Shiba Inu", value = description, inline = False)
+
+    description = "`$settings fox <value>` \
+    \nToggles whether or not the fox will appear. `<value>` must be either `true` or `false`."
+    embed.add_field(name = "Fox", value = description, inline = False)
 
     await ctx.send(embed = embed)
 
@@ -305,6 +317,85 @@ async def monkey(ctx, *args):
             elif args[0].lower() == "false":
                 Settings.monkeys_enabled = False
                 await ctx.send("Monkeys have been disabled.")
+
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either `true` or `false`.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
+@settings.command(pass_context = True)
+async def crow(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        try:
+            if args[0].lower() == "true":
+                Settings.crow_enabled = True
+                await ctx.send("Crow has been enabled.")
+
+            elif args[0].lower() == "false":
+                Settings.crow_enabled = False
+                await ctx.send("Crow has been disabled.")
+
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either `true` or `false`.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
+@settings.command(pass_context = True, aliases = ["shiba"])
+async def inu(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        i = 0
+        if args[0].lower() == "inu":
+            i = 1
+
+        try:
+            if args[i].lower() == "true":
+                Settings.inu_enabled = True
+                await ctx.send("Shiba Inu has been enabled.")
+
+            elif args[i].lower() == "false":
+                Settings.inu_enabled = False
+                await ctx.send("Shiba Inu has been disabled.")
+
+            else:
+                raise Exception("Invalid argument.") 
+
+        except:
+            await ctx.send("Please enter a valid argument: either `true` or `false`.")
+
+    # Invalid permission
+    else:
+        await insufficient_perms(ctx)
+
+@settings.command(pass_context = True)
+async def fox(ctx, *args):
+    await asyncio.sleep(0.1)
+
+    # Check permissions
+    if check_perms(ctx):
+        try:
+            if args[0].lower() == "true":
+                Settings.fox_enabled = True
+                await ctx.send("Fox has been enabled.")
+
+            elif args[0].lower() == "false":
+                Settings.fox_enabled = False
+                await ctx.send("Fox has been disabled.")
 
             else:
                 raise Exception("Invalid argument.") 
@@ -661,11 +752,6 @@ async def start(ctx):
             embed = discord.Embed(color = 0x00ff00, title = "Start Game", description = "The following {} players are in the game:\n\n{}\nStart the game?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
             await confirmations.confirm_game_start(ctx, embed)
 
-        # Confirm if player limit should be ignored
-        elif bypass_player_limit and number_of_players > 0:
-            embed = discord.Embed(color = 0xffff00, title = "Not Enough Players", description = "There are only {} out of the standard minimum of 12 players in the game:\n\n{}\nThe game may not function properly. Are you sure you want to begin?".format(number_of_players, players.Player_Manager.list_players_raw(mention = True)))
-            await confirmations.confirm_game_start(ctx, embed)
-
         # No players
         elif number_of_players == 0:
             embed = discord.Embed(color = 0xff0000, title = "Not Enough Players", description = "No players are currently in the game.")
@@ -1003,10 +1089,11 @@ async def on_reaction_add(reaction, user):
                 await gameplay.continue_start(reaction.message.channel)
 
             elif reaction.emoji == '❌':
-                confirm_message["roles"] = None
-                await gameplay.on_reset()
-                embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
-                await channel.send(embed = embed)
+                async with channel.typing():
+                    confirm_message["roles"] = None
+                    await gameplay.on_reset(fast_ver = True)
+                    embed = discord.Embed(color = 0xff0000, title = "Game Start Cancelled", description = "Game start has been cancelled.")
+                    await channel.send(embed = embed)
             return
 
         # Clear chat confirmation
@@ -1022,10 +1109,11 @@ async def on_reaction_add(reaction, user):
         # End game confirmation
         if confirm_message["end_game"] != None and reaction.message.id == confirm_message["end_game"].id and confirm_user["end_game"] == user:
             if reaction.emoji == '✅':
-                confirm_message["end_game"] = None
+                async with channel.typing():
+                    confirm_message["end_game"] = None
 
-                gameplay.run_game = False
-                await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
+                    gameplay.run_game = False
+                    await gameplay.reset_game(reaction.message.channel, clear_player_list = False)
 
             elif reaction.emoji == '❌':
                 confirm_message["end_game"] = None
@@ -1035,10 +1123,11 @@ async def on_reaction_add(reaction, user):
         # Reset game confirmation
         if confirm_message["reset_game"] != None and reaction.message.id == confirm_message["reset_game"].id and confirm_user["reset_game"] == user:
             if reaction.emoji == '✅':
-                confirm_message["reset_game"] = None
+                async with channel.typing():
+                    confirm_message["reset_game"] = None
 
-                gameplay.run_game = False
-                await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
+                    gameplay.run_game = False
+                    await gameplay.reset_game(reaction.message.channel, clear_player_list = True)
 
             elif reaction.emoji == '❌':
                 confirm_message["reset_game"] = None

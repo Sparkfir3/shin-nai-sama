@@ -39,7 +39,8 @@ dead_role = None
 # Sets up the game and starts it
 async def on_start(user, fallback_channel):
     global channels
-    await on_reset()
+    async with fallback_channel.typing():
+        await on_reset()
 
     # Throw error if channels are not setup
     try:
@@ -504,15 +505,16 @@ def get_day_length():
 
 # Called by the reset command
 async def reset_game(channel, clear_player_list = False):
-    await on_reset(clear_player_list = clear_player_list)
+    async with channel.typing():
+        await on_reset(clear_player_list = clear_player_list)
 
-    if clear_player_list:
-        await channel.send("The game has been reset.")
-    else:
-        await channel.send("The game has been forcefully ended.")
+        if clear_player_list:
+            await channel.send("The game has been reset.")
+        else:
+            await channel.send("The game has been forcefully ended.")
 
 # Resets the game; called whenever a reset is needed
-async def on_reset(clear_player_list = False):
+async def on_reset(clear_player_list = False, fast_ver = False):
     global game_phase, day_number, previous_day_length, second_count, end_setup, run_game, next_phase, pause_timer, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
@@ -540,18 +542,19 @@ async def on_reset(clear_player_list = False):
         None
 
     # Fix user nicknames and unmute
-    # Moderator
-    try:
-        await players.Player_Manager.moderator.edit(nick = players.Player_Manager.moderator.display_name.replace("!", ""))
-    except:
-        None
-    # Players
-    for player in players.Player_Manager.players:
+    if not fast_ver:
+        # Moderator
         try:
-            await set_nickname(player.user, clear = True)
-            await player.user.edit(mute = True)
+            await players.Player_Manager.moderator.edit(nick = players.Player_Manager.moderator.display_name.replace("!", ""))
         except:
             None
+        # Players
+        for player in players.Player_Manager.players:
+            try:
+                await set_nickname(player.user, clear = True)
+                await player.user.edit(mute = False)
+            except:
+                None
 
     # Clear/reset player list
     if clear_player_list:
