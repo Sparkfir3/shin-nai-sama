@@ -445,7 +445,7 @@ async def night():
     if day_number == 1 and players.Player_Manager.badger_alive():
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["badger"].format(mention_wolves.strip()))
-        await channels["moderator"].send("The badger has been sent their updated role.")
+        await channels["moderator"].send("The badger, {}, has been sent their updated role.".format(players.Player_Manager.badger.user.mention))
         await asyncio.sleep(0.1)
 
     # Timer

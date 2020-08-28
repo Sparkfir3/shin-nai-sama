@@ -288,6 +288,20 @@ async def badger(ctx, *args):
     # Check permissions
     if check_perms(ctx):
         try:
+            # True/False
+            try:
+                if args[0].lower() == "true":
+                    Settings.badger_chance = 100
+                    await ctx.send("Badger chance set to 100%")
+                    return
+                elif args[0].lower() == "false":
+                    Settings.badger_chance = 0
+                    await ctx.send("Badger chance set to 0%")
+                    return
+            except:
+                None
+
+            # Number value
             value = int(args[0])
             if value >= 0 and value <= 100:
                 Settings.badger_chance = value

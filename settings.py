@@ -40,7 +40,7 @@ class Settings:
 
     @classmethod
     def get_min_player_count(cls):
-        min_count = 2 + (1 if cls.wolf_count == 0 else cls.wolf_count) # Snake, Spider, Wolf
+        min_count = 2 # Snake, Spider
         if cls.badger_chance > 0: # Badger
             min_count += 1
             if cls.inu_enabled: # Shiba Inu
@@ -51,5 +51,10 @@ class Settings:
             min_count += 1
         if cls.fox_enabled: # Fox
             min_count += 1
+
+        if cls.wolf_count > 0: # Wolf - manual
+            min_count += cls.wolf_count
+        else: # Wolf - automatic
+            min_count += 2 if min_count >= 7 else 1
 
         return min_count
