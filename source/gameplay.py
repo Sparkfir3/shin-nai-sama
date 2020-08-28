@@ -224,21 +224,35 @@ async def dm_roles():
     await asyncio.sleep(0.1)
 
     # DM players - monkeys
-    dm = await get_dm_channel(players.Player_Manager.monkeys[0].user)
-    await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[1].name))
-    await asyncio.sleep(0.1)
+    if len(players.Player_Manager.monkeys) > 0:
+        dm = await get_dm_channel(players.Player_Manager.monkeys[0].user)
+        await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[1].name))
+        await asyncio.sleep(0.1)
+        
+        dm = await get_dm_channel(players.Player_Manager.monkeys[1].user)
+        await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
+        await asyncio.sleep(0.1)
     
-    dm = await get_dm_channel(players.Player_Manager.monkeys[1].user)
-    await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
-    await asyncio.sleep(0.1)
+    # DM players - crow
+    if players.Player_Manager.crow_alive():
+        dm = await get_dm_channel(players.Player_Manager.crow.user)
+        await dm.send(start_role_messages["crow"])
+        await asyncio.sleep(0.1)
     
-    # DM players - crow    
-    dm = await get_dm_channel(players.Player_Manager.crow.user)
-    await dm.send(start_role_messages["crow"])
-    await asyncio.sleep(0.1)
+    # DM players - inu
+    if players.Player_Manager.inu_alive():
+        dm = await get_dm_channel(players.Player_Manager.inu.user)
+        await dm.send(start_role_messages["inu"])
+        await asyncio.sleep(0.1)
+    
+    # DM players - fox
+    if players.Player_Manager.fox_alive():
+        dm = await get_dm_channel(players.Player_Manager.fox.user)
+        await dm.send(start_role_messages["fox"])
+        await asyncio.sleep(0.1)
 
-    # DM badger
-    if players.Player_Manager.badger != None:
+    # DM players - badger
+    if players.Player_Manager.badger_alive():
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["human"])
         await asyncio.sleep(0.1)

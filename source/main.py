@@ -196,7 +196,7 @@ async def quickstart(ctx):
             await asyncio.sleep(0.1)
             if len(ctx.message.mentions) > 0:
                 await asyncio.sleep(0.1)
-                for i in range(12):
+                for i in range(8):
                     await addplayer(ctx)
 
             await asyncio.sleep(0.5)

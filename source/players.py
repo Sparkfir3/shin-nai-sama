@@ -131,27 +131,27 @@ class Player_Manager(object):
     # Attributes
     @classmethod
     def snake_alive(cls):
-        return cls.snake != None
+        return cls.snake is not None
 
     @classmethod
     def spider_alive(cls):
-        return cls.spider != None
+        return cls.spider is not None
 
     @classmethod
     def crow_alive(cls):
-        return cls.crow != None
+        return cls.crow is not None
 
     @classmethod
     def badger_alive(cls):
-        return cls.badger != None
+        return cls.badger is not None
 
     @classmethod
     def inu_alive(cls):
-        return cls.inu != None
+        return cls.inu is not None
 
     @classmethod
     def fox_alive(cls):
-        return cls.fox != None
+        return cls.fox is not None
 
     # -------------------------------------------
 
@@ -185,9 +185,9 @@ class Player_Manager(object):
         if len(cls.players) == 0:
             return "There are no players in the game to remove."
 
-        amount = len(cls.players) + len(cls.players_dead)
+        cls.reset()
+        amount = len(cls.players)
         cls.players = []
-        cls.players_dead = []
         return "All {} players have been removed.".format(amount)
 
     @classmethod
@@ -421,6 +421,8 @@ class Player_Manager(object):
 
         cls.crow = None
         cls.badger = None
+        cls.inu = None
+        cls.fox = None
 
         # Wolves
         cls.wolves_all = []
