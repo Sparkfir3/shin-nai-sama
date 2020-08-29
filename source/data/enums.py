@@ -20,5 +20,9 @@ class Player_Types(IntEnum):
     Spider = 2
     Monkey = 3
     Crow = 4
-    Badger = 5
-    Wolf = 6
+    Inu = 5
+
+    Fox = 6
+    
+    Badger = 7
+    Wolf = 8

@@ -32,6 +32,15 @@ async def get_dead_role():
     else:
         return role
 
+async def set_nickname(user, clear = True, dead = False, spectate = False):
+    if clear:
+        await user.edit(nick = user.display_name.replace("死", "").replace("見", "").strip())
+
+    if dead:
+        user.edit(nick = "死 {}".format(user.display_name))
+    elif spectate:
+        user.edit(nick = "見 {}".format(user.display_name))
+
 def ordinalize(number):
     mod10 = number % 10
     mod100 = number % 100

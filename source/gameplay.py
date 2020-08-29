@@ -18,6 +18,7 @@ sys.path.append('source/utility')
 from misc import get_dm_channel
 from misc import get_participant_role
 from misc import get_dead_role
+from misc import set_nickname
 from misc import ordinalize
 import confirmations
 
@@ -38,7 +39,8 @@ dead_role = None
 # Sets up the game and starts it
 async def on_start(user, fallback_channel):
     global channels
-    await on_reset()
+    async with fallback_channel.typing():
+        await on_reset()
 
     # Throw error if channels are not setup
     try:
@@ -57,6 +59,7 @@ async def on_start(user, fallback_channel):
         await fallback_channel.send(embed = embed)
         return
 
+    # Set up game
     try:
         global game_phase
         game_phase = Game_Phase.Starting
@@ -98,7 +101,7 @@ async def continue_start(channel):
             await channels["snake"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["spider"].set_permissions(everyone, read_messages = False, send_messages = False)
             await channels["dead"].set_permissions(everyone, read_messages = False, send_messages = False)
-            await channels["voice_meeting"].set_permissions(everyone, view_channel = False)
+            await channels["voice_meeting"].set_permissions(everyone, view_channel = True)
             await channels["voice_wolves"].set_permissions(everyone, view_channel = False)
 
             # Set moderator's permissions
@@ -221,21 +224,35 @@ async def dm_roles():
     await asyncio.sleep(0.1)
 
     # DM players - monkeys
-    dm = await get_dm_channel(players.Player_Manager.monkeys[0].user)
-    await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[1].name))
-    await asyncio.sleep(0.1)
+    if len(players.Player_Manager.monkeys) > 0:
+        dm = await get_dm_channel(players.Player_Manager.monkeys[0].user)
+        await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[1].name))
+        await asyncio.sleep(0.1)
+        
+        dm = await get_dm_channel(players.Player_Manager.monkeys[1].user)
+        await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
+        await asyncio.sleep(0.1)
     
-    dm = await get_dm_channel(players.Player_Manager.monkeys[1].user)
-    await dm.send(start_role_messages["monkey"].format(players.Player_Manager.monkeys[0].name))
-    await asyncio.sleep(0.1)
+    # DM players - crow
+    if players.Player_Manager.crow_alive():
+        dm = await get_dm_channel(players.Player_Manager.crow.user)
+        await dm.send(start_role_messages["crow"])
+        await asyncio.sleep(0.1)
     
-    # DM players - crow    
-    dm = await get_dm_channel(players.Player_Manager.crow.user)
-    await dm.send(start_role_messages["crow"])
-    await asyncio.sleep(0.1)
+    # DM players - inu
+    if players.Player_Manager.inu_alive():
+        dm = await get_dm_channel(players.Player_Manager.inu.user)
+        await dm.send(start_role_messages["inu"])
+        await asyncio.sleep(0.1)
+    
+    # DM players - fox
+    if players.Player_Manager.fox_alive():
+        dm = await get_dm_channel(players.Player_Manager.fox.user)
+        await dm.send(start_role_messages["fox"])
+        await asyncio.sleep(0.1)
 
-    # DM badger
-    if players.Player_Manager.badger != None:
+    # DM players - badger
+    if players.Player_Manager.badger_alive():
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["human"])
         await asyncio.sleep(0.1)
@@ -428,7 +445,7 @@ async def night():
     if day_number == 1 and players.Player_Manager.badger_alive():
         dm = await get_dm_channel(players.Player_Manager.badger.user)
         await dm.send(start_role_messages["badger"].format(mention_wolves.strip()))
-        await channels["moderator"].send("The badger has been sent their updated role.")
+        await channels["moderator"].send("The badger, {}, has been sent their updated role.".format(players.Player_Manager.badger.user.mention))
         await asyncio.sleep(0.1)
 
     # Timer
@@ -502,15 +519,16 @@ def get_day_length():
 
 # Called by the reset command
 async def reset_game(channel, clear_player_list = False):
-    await on_reset(clear_player_list = clear_player_list)
+    async with channel.typing():
+        await on_reset(clear_player_list = clear_player_list)
 
-    if clear_player_list:
-        await channel.send("The game has been reset.")
-    else:
-        await channel.send("The game has been forcefully ended.")
+        if clear_player_list:
+            await channel.send("The game has been reset.")
+        else:
+            await channel.send("The game has been forcefully ended.")
 
 # Resets the game; called whenever a reset is needed
-async def on_reset(clear_player_list = False):
+async def on_reset(clear_player_list = False, fast_ver = False):
     global game_phase, day_number, previous_day_length, second_count, end_setup, run_game, next_phase, pause_timer, participant_role, dead_role
     game_phase = Game_Phase.Null
     day_number = 0
@@ -537,18 +555,20 @@ async def on_reset(clear_player_list = False):
     except:
         None
 
-    # Fix user nicknames
-    # Moderator
-    try:
-        await players.Player_Manager.moderator.edit(nick = players.Player_Manager.moderator.display_name.replace("!", ""))
-    except:
-        None
-    # Players
-    for player in players.Player_Manager.players:
+    # Fix user nicknames and unmute
+    if not fast_ver:
+        # Moderator
         try:
-            await player.user.edit(nick = player.user.display_name.replace("死", "").replace("見", ""))
+            await players.Player_Manager.moderator.edit(nick = players.Player_Manager.moderator.display_name.replace("!", ""))
         except:
             None
+        # Players
+        for player in players.Player_Manager.players:
+            try:
+                await set_nickname(player.user, clear = True)
+                await player.user.edit(mute = False)
+            except:
+                None
 
     # Clear/reset player list
     if clear_player_list:

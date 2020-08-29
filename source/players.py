@@ -9,11 +9,15 @@ sys.path.append('source/data')
 from enums import Player_Types
 from dictionaries import channels
 
+sys.path.append('source/utility')
+from misc import set_nickname
+
 import random
 from random import shuffle
 
 # Stores information about each plater
 class Player(object):
+
     def __init__(self, user_data, player_type):
         self._user = user_data
         self._type = player_type
@@ -65,6 +69,9 @@ class Player(object):
     
     # Other
     def is_human(self):
+        return type <= Player_Types.Inu
+
+    def is_not_wolf(self):
         return type <= Player_Types.Badger
 
     def on_wolf_side(self):
@@ -81,6 +88,10 @@ class Player(object):
             return "Monkey"
         elif self.type == Player_Types.Crow:
             return "Crow"
+        elif self.type == Player_Types.Inu:
+            return "Shiba Inu"
+        elif self.type == Player_Types.Fox:
+            return "Fox"
         elif self.type == Player_Types.Badger:
             return "Badger"
         elif self.type == Player_Types.Wolf:
@@ -108,6 +119,10 @@ class Player_Manager(object):
 
     crow = None
     badger = None
+    inu = None
+
+    # Fox
+    fox = None
 
     # Wolves
     wolves_all = []
@@ -116,19 +131,27 @@ class Player_Manager(object):
     # Attributes
     @classmethod
     def snake_alive(cls):
-        return cls.snake != None
+        return cls.snake is not None
 
     @classmethod
     def spider_alive(cls):
-        return cls.spider != None
+        return cls.spider is not None
 
     @classmethod
     def crow_alive(cls):
-        return cls.crow != None
+        return cls.crow is not None
 
     @classmethod
     def badger_alive(cls):
-        return cls.badger != None
+        return cls.badger is not None
+
+    @classmethod
+    def inu_alive(cls):
+        return cls.inu is not None
+
+    @classmethod
+    def fox_alive(cls):
+        return cls.fox is not None
 
     # -------------------------------------------
 
@@ -162,6 +185,7 @@ class Player_Manager(object):
         if len(cls.players) == 0:
             return "There are no players in the game to remove."
 
+        cls.reset()
         amount = len(cls.players)
         cls.players = []
         return "All {} players have been removed.".format(amount)
@@ -234,7 +258,7 @@ class Player_Manager(object):
 
                     # Change nickname
                     try:
-                        await player.user.edit(nick = "死 {}".format(player.user.display_name))
+                        await set_nickname(player.user, dead = True)
 
                     except:
                         await channels["moderator"].send("Failed to change the nickname of {} on death.".format(player.user.display_name))
@@ -253,7 +277,7 @@ class Player_Manager(object):
 
     # Listing players
     @classmethod
-    def list_players(cls):
+    def list_players(cls, roles = False):
         # No players
         if len(cls.players) == 0 and len(cls.players_dead) == 0:
             return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw())
@@ -263,13 +287,13 @@ class Player_Manager(object):
             # Alive
             description = "{} player{} alive:\n\n{}".format(len(cls.players), \
                 "s are" if len(cls.players) != 1 else " is", \
-                cls.list_players_raw(mention = True))
+                cls.list_players_raw(mention = True, role = roles))
             embed = discord.Embed(color = 0x00080ff, title = "List of Players", description = description)
 
             # Dead
             description = "{} player{} dead:\n\n{}".format(len(cls.players_dead), \
                 "s are" if len(cls.players_dead) != 1 else " is", \
-                cls.list_players_raw(mention = True, dead_players = True))
+                cls.list_players_raw(mention = True, role = roles, dead_players = True))
             embed.add_field(name = "Dead Players", value = description, inline = False)
 
             return embed
@@ -278,18 +302,18 @@ class Player_Manager(object):
         description = "There {} {} player{} in the game:\n\n{}".format("is" if len(cls.players) == 1 else "are", \
             len(cls.players), \
             "s" if len(cls.players) != 1 else "", \
-            cls.list_players_raw(mention = True))
+            cls.list_players_raw(mention = True, role = roles))
         return discord.Embed(color = 0x0080ff, title = "List of Players", description = description)
 
     @classmethod
     def list_players_with_roles(cls):
-        return discord.Embed(color = 0x0080ff, title = "List of Players", description = cls.list_players_raw(mention = True, role = True))
+        return cls.list_players(roles = True)
 
     @classmethod
     def list_players_raw(cls, mention = False, role = False, dead_players = False):
         text = ""
         # No players
-        if len(cls.players) == 0:
+        if (dead_players and len(cls.players_dead) == 0) or len(cls.players) == 0:
             text = "No players are currently in the game."
         # Get players
         else:
@@ -333,9 +357,12 @@ class Player_Manager(object):
             players[-1].type = Player_Types.Spider
             cls.spider = players.pop()
 
-            players[-1].type = Player_Types.Crow
-            cls.crow = players.pop()
+            # Crow
+            if Settings.crow_enabled:
+                players[-1].type = Player_Types.Crow
+                cls.crow = players.pop()
 
+            # Monkeys
             if Settings.monkeys_enabled:
                 for i in range(2):
                     players[-1].type = Player_Types.Monkey
@@ -346,6 +373,15 @@ class Player_Manager(object):
             if have_badger:
                 players[-1].type = Player_Types.Badger
                 cls.badger = players.pop()
+                # Shiba Inu
+                if Settings.inu_enabled:
+                    players[-1].type = Player_Types.Inu
+                    cls.inu = players.pop()
+
+            # Fox
+            if Settings.fox_enabled:
+                players[-1].type = Player_Types.Fox
+                cls.fox = players.pop()
 
             # Regular humans
             for i in range(len(players)):
@@ -385,6 +421,8 @@ class Player_Manager(object):
 
         cls.crow = None
         cls.badger = None
+        cls.inu = None
+        cls.fox = None
 
         # Wolves
         cls.wolves_all = []
